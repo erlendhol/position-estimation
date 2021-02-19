@@ -23,6 +23,14 @@
 
 Adafruit_BNO055 IMU_SENSOR = Adafruit_BNO055();
 
+int16_t velocity_x = 0;
+int16_t velocity_y = 0;
+int16_t velocity_z = 0;
+
+int16_t current_placement_x = 0;
+int16_t current_placement_y = 0;
+int16_t current_placement_z = 0;
+
 void setup() {
   // Start serial monitor with baud rate = 115200
   Serial.begin(115200);
@@ -75,5 +83,33 @@ void loop() {
   Serial.println(mag.z());
 #endif
 
+  // Integrate the acceleration to get velocity
+  velocity_x += acc.x()*IMU_SAMPLE_RATE_MS;
+  velocity_y += acc.y()*IMU_SAMPLE_RATE_MS;
+  velocity_z += acc.z()*IMU_SAMPLE_RATE_MS;
+  
+  // Integrate velocity to get position
+  current_placement_x += velocity_x*IMU_SAMPLE_RATE_MS;
+  current_placement_y += velocity_y*IMU_SAMPLE_RATE_MS;
+  current_placement_z += velocity_z*IMU_SAMPLE_RATE_MS;
+
+#ifdef PRINT_DATA_VALUES
+  Serial.println("***** VELOCITY *****");
+  Serial.print("x: ");
+  Serial.println(velocity_x);
+  Serial.print("y: ");
+  Serial.println(velocity_y);
+  Serial.print("z: ");
+  Serial.println(velocity_z);
+
+  Serial.println("***** POSITION *****");
+  Serial.print("x: ");
+  Serial.println(current_placement_x);
+  Serial.print("y: ");
+  Serial.println(current_placement_y);
+  Serial.print("z: ");
+  Serial.println(current_placement_z);
+#endif
+  
   delay(IMU_SAMPLE_RATE_MS);
 }
