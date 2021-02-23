@@ -12,14 +12,16 @@
 #include <utility/imumaths.h>
 
 // Comment out to turn off debug
-#define DEBUG 0
+//#define DEBUG 0
 // Comment out to turn off data values printing
-#define PRINT_DATA_VALUES 0
+//#define PRINT_DATA_VALUES 0
 
 // Define number of samples per second
 #define SAMPLES_PER_SECOND 20
 // Define the sample rate of the IMU in milliseconds
 #define IMU_SAMPLE_RATE_MS 1000/SAMPLES_PER_SECOND
+// Size of dataFrame array
+#define DATA_FRAME_SIZE 9
 
 Adafruit_BNO055 IMU_SENSOR = Adafruit_BNO055();
 
@@ -30,6 +32,10 @@ int16_t velocity_z = 0;
 int16_t current_placement_x = 0;
 int16_t current_placement_y = 0;
 int16_t current_placement_z = 0;
+
+unsigned long nextTimeout = 0;
+
+int i = DATA_FRAME_SIZE;
 
 void setup() {
   // Start serial monitor with baud rate = 115200
@@ -51,6 +57,10 @@ void setup() {
 }
 
 void loop() {
+  startTimer(IMU_SAMPLE_RATE_MS);
+  while (!timerHasExpired()) {
+    
+  }
   imu::Vector<3> acc = IMU_SENSOR.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
   imu::Vector<3> gyro = IMU_SENSOR.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
   imu::Vector<3> mag = IMU_SENSOR.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
@@ -83,15 +93,12 @@ void loop() {
   Serial.println(mag.z());
 #endif
 
-  // Integrate the acceleration to get velocity
-  velocity_x += acc.x()*IMU_SAMPLE_RATE_MS;
-  velocity_y += acc.y()*IMU_SAMPLE_RATE_MS;
-  velocity_z += acc.z()*IMU_SAMPLE_RATE_MS;
-  
-  // Integrate velocity to get position
-  current_placement_x += velocity_x*IMU_SAMPLE_RATE_MS;
-  current_placement_y += velocity_y*IMU_SAMPLE_RATE_MS;
-  current_placement_z += velocity_z*IMU_SAMPLE_RATE_MS;
+float dataFrame[DATA_FRAME_SIZE] = {acc.x(), acc.y(), acc.z(), gyro.x(), gyro.y(), gyro.z(), mag.x(), mag.y(), mag.z()};
+for(int i = 0; i < DATA_FRAME_SIZE; i++) {
+  Serial.print(dataFrame[i]);
+  Serial.print(" "); 
+}
+Serial.println(" ");
 
 #ifdef PRINT_DATA_VALUES
   Serial.println("***** VELOCITY *****");
@@ -111,5 +118,40 @@ void loop() {
   Serial.println(current_placement_z);
 #endif
   
-  delay(IMU_SAMPLE_RATE_MS);
+  //delay(IMU_SAMPLE_RATE_MS);
+}
+
+//----- Timer functions ----
+
+/**
+   Checks if the timer has expired. If so, true is returned.
+   If the timer has not yet "expired", false is returned.
+
+   @return true if timer expired, false if not.
+*/
+
+boolean timerHasExpired()
+{
+  boolean result = false;
+  if (millis() > nextTimeout)
+  {
+    result = true;
+  }
+  else
+  {
+    result = false;
+  }
+  return result;
+}
+
+
+/**
+   Starts the timer and set the timer to expire after
+   the number of milliseconds given by the parameter timeout.
+
+   @param timeout The number of milliseconds until the timer will expire.
+*/
+void startTimer(int timeout)
+{
+  nextTimeout = millis() + timeout;
 }
