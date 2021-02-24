@@ -1,3 +1,11 @@
+"""
+Code snippet is based on "Rotation Matrix To Euler Angles" from Learn OpenCV (Satya Mallick, 2016)
+https://learnopencv.com/rotation-matrix-to-euler-angles/
+
+
+"""
+
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -42,10 +50,20 @@ def quat_to_rot_matrix(q):
                   [0, 0, 0, 1]])
     return R
 
+
+
 def rot_matrix_to_euler(r):
-    roll = math.atan2(r[2, 1], r[2, 2])
-    pitch = math.asin(r[2, 0])
-    yaw = -math.atan2(r[1, 0], r[0, 0])
+    sy = math.sqrt(r[0, 0] * r[0, 0]+ r[1, 0] * r[1, 0])
+
+    singular = sy < 1e-6
+    if not singular:
+        roll = math.atan2(r[2, 1], r[2,2])
+        pitch = math.atan2(-r[2, 0], sy)
+        yaw = math.atan2(r[1, 0], r[0, 0])
+    else:
+        roll = math.atan2(-r[1, 2], r[1, 1])
+        pitch = math.atan2(-r[2, 0], sy)
+        yaw = 0
     return np.array([math.degrees(roll), math.degrees(pitch), math.degrees(yaw)])
 
 """
@@ -61,6 +79,11 @@ def get_pos(representation):
     return pos
 
 def get_orientation(representation):
+    """
+    my function\n
+    :param representation 
+
+    """
     rot_matrix = representation[0:3, 0:3]
     orientation = rot_matrix_to_euler(rot_matrix)
     return orientation
@@ -72,55 +95,35 @@ print(r)
 
 if __name__ == "__main__":
     representation = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-    new_pos = [3, 8, 5]
-    new_orientation = [180, 0, 0]
+    new_pos = [3, 2, 1]
+    new_orientation = [6.1231, -24.123, 0.12312]
     new_quat = euler_to_quaternion(new_orientation)
     new_representation = np.matmul(np.matmul(pos_to_trans_matrix(new_pos), quat_to_rot_matrix(new_quat)), representation)
-    new_representation = np.matmul(np.matmul(pos_to_trans_matrix(new_pos), quat_to_rot_matrix(new_quat)), new_representation)
     print(new_representation, "\n")
     print("Pos: ", get_pos(new_representation))
     print("Orientation: ", get_orientation(new_representation))
 
+    rep_pos = get_pos(new_representation)
+    rep_quat = euler_to_quaternion(get_orientation(new_representation))
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # Cartesian axes
+    ax.quiver(-1, 0, 0, 3, 0, 0, color='#aaaaaa',linestyle='dashed')
+    ax.quiver(0, -1, 0, 0, 3, 0, color='#aaaaaa',linestyle='dashed')
+    ax.quiver(0, 0, -1, 0, 0, 3, color='#aaaaaa',linestyle='dashed')
 
+    ax.set_xlim([-5, 5])
+    ax.set_ylim([-5, 5])
+    ax.set_zlim([-5, 5])
 
-# plot_cube(cube1)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
 
-# for i in range(0, 202):
-#     orient = orientation[i, :]
-#     #print(orient)
-#     quat = euler_to_quaternion(orient)
-#     #print(quat)
-    
-#     #q = Quaternion(q=np.array([qw, qx, qy, qz]))
-#     #q = Quaternion(q=np.array([quat[1], quat[2], quat[3], quat[0]]))
+    ax.quiver(rep_pos[0], rep_pos[1], rep_pos[2], rep_quat[1], rep_quat[2], rep_quat[3] , color='b', normalize=True)
 
-#     print(quat)
-#     time.sleep(0.1)
+    fig.canvas.draw()
 
-
-
-
-
-
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# # Cartesian axes
-# ax.quiver(-1, 0, 0, 3, 0, 0, color='#aaaaaa',linestyle='dashed')
-# ax.quiver(0, -1, 0, 0, 3, 0, color='#aaaaaa',linestyle='dashed')
-# ax.quiver(0, 0, -1, 0, 0, 3, color='#aaaaaa',linestyle='dashed')
-
-# ax.set_xlim([-1, 1])
-# ax.set_ylim([-1, 1])
-# ax.set_zlim([-1, 1])
-
-# ax.set_xlabel('X')
-# ax.set_ylabel('Y')
-# ax.set_zlabel('Z')
-
-# ax.quiver(0, 0, 0, quaternion[1], quaternion[2], quaternion[3], color='b', normalize=True)
-
-# fig.canvas.draw()
-
-# plt.show()
+    plt.show()
 
