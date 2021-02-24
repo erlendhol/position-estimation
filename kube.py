@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from threading import Thread
+import time
+from sys import stdout
+
 class Quaternion:
     """Quaternions for 3D rotations"""
     def __init__(self, x):
@@ -119,12 +123,6 @@ class CubeAxes(plt.Axes):
 
         self.figure.canvas.draw()
 
-fig = plt.figure(figsize=(4, 4))
-ax = CubeAxes(fig)
-fig.add_axes(ax)
-ax.draw_cube()
-plt.show()
-
 class CubeAxesInteractive(CubeAxes):
     """An Axes for displaying an Interactive 3D cube"""
     def __init__(self, *args, **kwargs):
@@ -135,6 +133,8 @@ class CubeAxesInteractive(CubeAxes):
         self._v_UD = (-1, 0, 0)
         self._active = False
         self._xy = None
+
+        self.v, self.theta = self.current_rot.as_v_theta()
 
         # connect some GUI events
         self.figure.canvas.mpl_connect('button_press_event',
@@ -149,10 +149,16 @@ class CubeAxesInteractive(CubeAxes):
                                        self._key_release)
 
         self.figure.text(0.05, 0.05, ("Click and Drag to Move\n"
-                                    "Hold shift key to adjust rotation"))
+                                    "Hold 'r' key to adjust rotation"))
+
+        #self.figure.text(0.05, 0.9, ("Theta:", self.theta))
+
+        self.printThread = Thread(target=self._print_matrix, args=())
+        self.printThread.daemon = True
+        self.printThread.start()
 
     #----------------------------------------------------------
-    # when the shift button is down, change the rotation axis
+    # when the 'r' button is down, change the rotation axis
     # of left-right movement
     def _key_press(self, event):
         """Handler for key press events"""
@@ -191,6 +197,15 @@ class CubeAxesInteractive(CubeAxes):
 
             self.current_rot = (rot2 * rot1 * self.current_rot)
             self.draw_cube()
+
+    def _print_matrix(self):
+        while(True):
+            print("Rotation Matrix: \n", self.current_rot.as_rotation_matrix())
+            self.v, self.theta = self.current_rot.as_v_theta()
+            print("Rotation vector: ", self.v)
+            print("Theta = ", self.theta)
+            time.sleep(0.2)
+
 
 fig = plt.figure(figsize=(4, 4))
 ax = CubeAxesInteractive(fig)
