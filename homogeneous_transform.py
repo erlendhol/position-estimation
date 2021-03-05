@@ -64,6 +64,21 @@ def quat_to_rot_matrix(q):
                   [0, 0, 0, 1]])
     return R
 
+def euler_to_rot_matrix(r):
+    (psi, theta, phi) = (r[2], r[1], r[0])
+    c_phi = math.cos(math.radians(phi))
+    s_phi = math.sin(math.radians(phi))
+    c_theta = math.cos(math.radians(theta))
+    s_theta = math.sin(math.radians(theta))
+    c_psi = math.cos(math.radians(psi))
+    s_psi = math.sin(math.radians(psi))
+
+    R = np.array([[c_theta*c_psi, c_psi*s_theta*s_phi - s_psi*c_phi, c_psi*s_theta*c_phi + s_psi*s_phi, 0],
+                  [s_psi*c_theta, s_psi*s_theta*s_phi + c_psi*c_phi, s_psi*s_theta*c_phi - c_psi*s_phi, 0],
+                  [-s_theta, c_theta*s_phi, c_theta*c_phi, 0],
+                  [0, 0, 0, 1]])
+    return R
+
 def to_3x3_rot_matrix(m):
     """
     Extracts a 3x3 matrix from a larger than 3x3 matrix \n
@@ -151,19 +166,19 @@ if __name__ == "__main__":
     rot_matrices = get_rot_matrix_list(data)
     print('Rotation matrices: ', rot_matrices)
 
-    # representation = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-    # new_pos = [3, 2, 1]
-    # new_orientation = [6.1231, -24.123, 0.12312]
-    # new_quat = euler_to_quaternion(new_orientation)
-    # new_representation = np.matmul(np.matmul(pos_to_trans_matrix(new_pos), quat_to_rot_matrix(new_quat)), representation)
-    # print(new_representation, "\n")
-    # print("Pos: ", get_pos(new_representation))
-    # print("Orientation: ", get_orientation(new_representation))
+    representation = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    new_pos = [3, 2, 1]
+    new_orientation = [6.1231, -24.123, 0.12312]
+    new_quat = euler_to_quaternion(new_orientation)
+    new_representation = np.matmul(np.matmul(pos_to_trans_matrix(new_pos), quat_to_rot_matrix(new_quat)), representation)
+    print(new_representation, "\n")
+    print("Pos: ", get_pos(new_representation))
+    print("Orientation: ", get_orientation(new_representation))
 
-    # rep_pos = get_pos(new_representation)
-    # rep_quat = euler_to_quaternion(get_orientation(new_representation))
+    rep_pos = get_pos(new_representation)
+    rep_quat = euler_to_quaternion(get_orientation(new_representation))
 
-    # print(to_3x3_rot_matrix(new_representation))
+    print(to_3x3_rot_matrix(new_representation))
 
     # fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')
