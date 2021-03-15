@@ -1,6 +1,7 @@
 import numpy as np
 import math
-from abc import *
+import matplotlib.pyplot as plt
+import random
 import homogeneous_transform as ht
 
 class Frame(object):
@@ -78,96 +79,59 @@ class Frame(object):
 if __name__ == '__main__':
     worldFrame = Frame()
     boatPos = np.array([1, 2, 3])
-    boatOrientation = np.array([5, 10, 15])
+    boatOrientation = np.array([90, 0, 0])
     boatFrame = Frame(position=boatPos, orientation=boatOrientation, parentFrame=worldFrame)
     tipPos = np.array([2, 4, 6])
-    tipOrientation = np.array([1, 0, 0])
+    tipOrientation = np.array([10, 20, 30])
     tipFrame = Frame(position=tipPos, orientation=tipOrientation, parentFrame=boatFrame)
     boatFrame.set_child_frame(tipFrame)
-    print(tipFrame.get_orientation())
-    print(tipFrame.get_parent_representation())
-    print(ht.rot_matrix_to_euler(tipFrame.get_parent_representation()))
-    print(tipFrame.get_grandparent_representation())
+    print('Tip orientation: ', tipFrame.get_orientation())
+    print('Boat representation: ', boatFrame.get_representation())
+    print('Boat representation: ', tipFrame.get_parent_representation())
+    print('Boat orientation: ', ht.rot_matrix_to_euler(tipFrame.get_parent_representation()))
+    print('World representation: ', tipFrame.get_grandparent_representation())
     print(boatFrame.get_grandparent_representation())
+    print('Tip orientation in relation to the world: ', ht.rot_matrix_to_euler(tipFrame.get_grandparent_representation()))
+    #boatFrame.update_orientation(np.array([14, -48, 56]))
+    print('New boat orientation: ', boatFrame.get_orientation())
+    print('New tip orientation in relation to the boat: ', tipFrame.get_orientation())
+    print('New tip orientation in relation to the world: ', ht.rot_matrix_to_euler(tipFrame.get_grandparent_representation()))
+
+
+    for i in range(0,10):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        # Cartesian axes
+        ax.quiver(-1, 0, 0, 3, 0, 0, color='#aaaaaa',linestyle='dashed')
+        ax.quiver(0, -1, 0, 0, 3, 0, color='#aaaaaa',linestyle='dashed')
+        ax.quiver(0, 0, -1, 0, 0, 3, color='#aaaaaa',linestyle='dashed')
+
+        ax.set_xlim([-10, 10])
+        ax.set_ylim([-10, 10])
+        ax.set_zlim([-10, 10])
+
+        ##labelling the axes
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        # Vector before rotation
+        print('Boat orientation: ', boatFrame.get_orientation())
+        boat_pos = boatFrame.get_position()
+        boat_repr = boatFrame.get_representation()
+        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 0], boat_repr[1, 0], boat_repr[2, 0], color='r')
+        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 1], boat_repr[1, 1], boat_repr[2, 1], color='g')
+        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 2], boat_repr[1, 2], boat_repr[2, 2], color='b')
+        #fig.canvas.draw()
+        new_orientation = np.array([random.randint(-90, 90), random.randint(-90, 90), random.randint(-90, 90)])
+        new_position = np.array([random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10)])
+        
+        boatFrame.update_orientation(new_orientation)
+        boatFrame.update_position(new_position)
+        plt.show()
+
     # representation_wb = np.matmul(boatFrame.get_trans_matrix(), boatFrame.get_rot_matrix())
     # representation_bt = np.matmul(tipFrame.get_trans_matrix(), tipFrame.get_rot_matrix())
     # representation_wt = np.matmul(representation_wb, representation_bt)
     # print(representation_wt)
     # print(ht.get_orientation(representation_wt))
     # print(ht.get_pos(representation_wt))
-    
-# class WorldFrame(Frame):
-#     pass
-
-# class BoatFrame(Frame):
-
-#     def __init__(self, position, orientation):
-#         self.position = position
-#         self.orientation = orientation
-#         self.parentFrame = None
-    
-#     def GetPosition():
-#         return position
-
-#     def GetOrientation():
-#         return orientation
-    
-#     def UpdatePosition(newPosition):
-#         self.position = newPosition
-
-#     def UpdateOrientation(newOrientation):
-#         self.orientation = newOrientation
-    
-#     def 
-
-# class GWBaseFrame(Frame):
-
-#     def __init__(self, position, orientation):
-#         self.position = position
-#         self.orientation = orientation
-#         self.parentFrame = None
-    
-#     def GetPosition():
-#         return position
-
-#     def GetOrientation():
-#         return orientation
-    
-#     def UpdatePosition(newPosition):
-#         self.position = newPosition
-
-#     def UpdateOrientation(newOrientation):
-#         self.orientation = newOrientation
-
-# class GWTipFrame(Frame):
-
-#     def __init__(self, position, orientation):
-#         self.position = position
-#         self.orientation = orientation
-#         self.parentFrame = None
-    
-#     def GetPosition():
-#         return position
-
-#     def GetOrientation():
-#         return orientation
-    
-#     def UpdatePosition(newPosition):
-#         self.position = newPosition
-
-#     def UpdateOrientation(newOrientation):
-#         self.orientation = newOrientation
-
-
-
-
-
-
-# class A(object):
-#     __metaclass__ = ABCMeta
-#     @abstractmethod
-#     def __init__(self, n):
-#         self.n = n
-
-# if __name__ == '__main__':
-#     a = A(3)
