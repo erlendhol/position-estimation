@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import random
 import homogeneous_transform as ht
+from mpl_toolkits.mplot3d import Axes3D
 
 class Frame(object):
     
@@ -82,7 +83,7 @@ if __name__ == '__main__':
     boatOrientation = np.array([90, 0, 0])
     boatFrame = Frame(position=boatPos, orientation=boatOrientation, parentFrame=worldFrame)
     tipPos = np.array([2, 4, 6])
-    tipOrientation = np.array([10, 20, 30])
+    tipOrientation = np.array([13, 73, 52])
     tipFrame = Frame(position=tipPos, orientation=tipOrientation, parentFrame=boatFrame)
     boatFrame.set_child_frame(tipFrame)
     print('Tip orientation: ', tipFrame.get_orientation())
@@ -118,12 +119,20 @@ if __name__ == '__main__':
         print('Boat orientation: ', boatFrame.get_orientation())
         boat_pos = boatFrame.get_position()
         boat_repr = boatFrame.get_representation()
-        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 0], boat_repr[1, 0], boat_repr[2, 0], color='r')
-        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 1], boat_repr[1, 1], boat_repr[2, 1], color='g')
-        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 2], boat_repr[1, 2], boat_repr[2, 2], color='b')
+        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 0], boat_repr[1, 0], boat_repr[2, 0], color='r', length=2)
+        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 1], boat_repr[1, 1], boat_repr[2, 1], color='g', length=2)
+        ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 2], boat_repr[1, 2], boat_repr[2, 2], color='b', length=2)
         #fig.canvas.draw()
+        tip_repr = tipFrame.get_grandparent_representation()
+        ax.quiver(tip_repr[0, 3], tip_repr[1, 3], tip_repr[2, 3], tip_repr[0, 0], tip_repr[1, 0], tip_repr[2, 0], color='r', length=1)
+        ax.quiver(tip_repr[0, 3], tip_repr[1, 3], tip_repr[2, 3], tip_repr[0, 1], tip_repr[1, 1], tip_repr[2, 1], color='g', length=1)
+        ax.quiver(tip_repr[0, 3], tip_repr[1, 3], tip_repr[2, 3], tip_repr[0, 2], tip_repr[1, 2], tip_repr[2, 2], color='b', length=1)
         new_orientation = np.array([random.randint(-90, 90), random.randint(-90, 90), random.randint(-90, 90)])
         new_position = np.array([random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10)])
+
+        if i > 5:
+            tipFrame.update_position([1, 1, 1])
+            tipFrame.update_orientation([90, 90, 90])
         
         boatFrame.update_orientation(new_orientation)
         boatFrame.update_position(new_position)
