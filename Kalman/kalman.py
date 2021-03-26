@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class KalmanFilter():
-    def __init__(self, A, H, Q, R, x_0, P_0):
+    def __init__(self, A, B, H, Q, R, x_0, P_0, u_0):
         # Model parameters
         self.A = A
+        self.B = B
         self.H = H
         self.Q = Q
         self.R = R
@@ -12,21 +13,29 @@ class KalmanFilter():
         # Initial state
         self._x = x_0
         self._P = P_0
+        self._u = u_0
 
     def predict(self):
-        self._x = self.A @ self._x
+        self._x = self.A @ self._x + self.B * self._u
         self._P = self.A @ self._P @ self.A.transpose() + self.Q
+        #print('Predicted state:', self._x)
 
     def update(self, z):
         self.S = self.H @ self._P @ self.H.transpose() + self.R
         self.V = z - self.H @ self._x
         self.K = self._P @ self.H.transpose() @ np.linalg.inv(self.S)
-
+        print(self.K)
         self._x = self._x + self.K @ self.V
         self._P = self._P - self.K @ self.S @ self.K.transpose()
 
     def get_state(self):
         return self._x, self._P
+
+    def updateParameters(self, A, B, Q, u):
+        self.A = A
+        self.B = B
+        self.Q = Q
+        self._u = u
 
 class MotionModel():
     def __init__(self, A, Q):
