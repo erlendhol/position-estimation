@@ -15,21 +15,27 @@ g_const = 9.80665
 #     theta = math.atan2(a_norm[1], a_norm[2])
 #     return math.degrees(theta)
 
-def get_pitch(a):
+def get_pitch(a, degrees=True):
     norm = np.linalg.norm(a)
     phi = 0
     if norm > 0:
         a_norm = np.divide(a.T, norm)
         phi = math.atan2(a_norm[0], math.sqrt(a_norm[0]**2 + a_norm[2]**2))
-    return math.degrees(phi)
+    if degrees:
+        return math.degrees(phi)
+    else:
+        return phi
 
-def get_roll(a):
+def get_roll(a, degrees=True):
     norm = np.linalg.norm(a)
     theta = 0
     if norm > 0:
         a_norm = np.divide(a.T, norm)
         theta = math.atan2(a_norm[1], math.sqrt(a_norm[1]**2 + a_norm[2]**2))
-    return math.degrees(theta)
+    if degrees:
+        return math.degrees(theta)
+    else:
+        return theta
 
 def get_yaw(a, m):
     phi = get_pitch(a)
