@@ -17,14 +17,18 @@ g_const = 9.80665
 
 def get_pitch(a):
     norm = np.linalg.norm(a)
-    a_norm = np.divide(a.T, norm)
-    phi = math.atan2(a_norm[0], math.sqrt(a_norm[0]**2 + a_norm[2]**2))
+    phi = 0
+    if norm > 0:
+        a_norm = np.divide(a.T, norm)
+        phi = math.atan2(a_norm[0], math.sqrt(a_norm[0]**2 + a_norm[2]**2))
     return math.degrees(phi)
 
 def get_roll(a):
     norm = np.linalg.norm(a)
-    a_norm = np.divide(a.T, norm)
-    theta = math.atan2(a_norm[1], math.sqrt(a_norm[1]**2 + a_norm[2]**2))
+    theta = 0
+    if norm > 0:
+        a_norm = np.divide(a.T, norm)
+        theta = math.atan2(a_norm[1], math.sqrt(a_norm[1]**2 + a_norm[2]**2))
     return math.degrees(theta)
 
 def get_yaw(a, m):
