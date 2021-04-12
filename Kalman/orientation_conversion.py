@@ -37,9 +37,9 @@ def get_roll(a, degrees=True):
     else:
         return theta
 
-def get_yaw(a, m):
-    phi = get_pitch(a)
-    theta = get_roll(a)
+def get_yaw(pitch, roll, m, degrees=True):
+    phi = pitch
+    theta = roll
     c_phi = math.cos(math.radians(phi))
     s_phi = math.sin(math.radians(phi))
     c_theta = math.cos(math.radians(theta))
@@ -64,5 +64,5 @@ if __name__ == "__main__":
     print('Phi: ', phi)
     theta = get_roll(acc)
     print('Theta: ', theta)
-    psi = get_yaw(acc, mag)
+    psi = get_yaw(phi, theta, mag)
     print('Psi: ', psi+180)
