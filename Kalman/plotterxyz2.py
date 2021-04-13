@@ -19,17 +19,46 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.graphWidgetX = PlotWidget(self.centralwidget)
-        self.graphWidgetX.setGeometry(QtCore.QRect(10, 10, 901, 231))
+        self.graphWidgetX.setGeometry(QtCore.QRect(10, 10, 611, 231))
         self.graphWidgetX.setObjectName("graphWidgetX")
         self.graphWidgetY = PlotWidget(self.centralwidget)
-        self.graphWidgetY.setGeometry(QtCore.QRect(10, 250, 901, 241))
+        self.graphWidgetY.setGeometry(QtCore.QRect(10, 250, 611, 241))
         self.graphWidgetY.setObjectName("graphWidgetY")
         self.graphWidgetZ = PlotWidget(self.centralwidget)
-        self.graphWidgetZ.setGeometry(QtCore.QRect(10, 500, 901, 241))
+        self.graphWidgetZ.setGeometry(QtCore.QRect(10, 500, 611, 241))
         self.graphWidgetZ.setObjectName("graphWidgetZ")
+        self.dialX = QtWidgets.QDial(self.centralwidget)
+        self.dialX.setGeometry(QtCore.QRect(630, 13, 281, 221))
+        self.dialX.setMinimum(-180)
+        self.dialX.setMaximum(180)
+        self.dialX.setWrapping(True)
+        self.dialX.setNotchesVisible(True)
+        self.dialX.setObjectName("dialX")
+        self.dialY = QtWidgets.QDial(self.centralwidget)
+        self.dialY.setGeometry(QtCore.QRect(630, 250, 271, 231))
+        self.dialY.setMinimum(-180)
+        self.dialY.setMaximum(180)
+        self.dialY.setWrapping(True)
+        self.dialY.setNotchesVisible(True)
+        self.dialY.setObjectName("dialY")
+        self.dialZ = QtWidgets.QDial(self.centralwidget)
+        self.dialZ.setGeometry(QtCore.QRect(630, 500, 271, 231))
+        self.dialZ.setMaximum(360)
+        self.dialZ.setWrapping(True)
+        self.dialZ.setNotchesVisible(True)
+        self.dialZ.setObjectName("dialZ")
+        self.Roll_label = QtWidgets.QLabel(self.centralwidget)
+        self.Roll_label.setGeometry(QtCore.QRect(740, 100, 71, 31))
+        self.Roll_label.setObjectName("Roll_label")
+        self.Pitch_label = QtWidgets.QLabel(self.centralwidget)
+        self.Pitch_label.setGeometry(QtCore.QRect(730, 350, 71, 31))
+        self.Pitch_label.setObjectName("Pitch_label")
+        self.Yaw_label = QtWidgets.QLabel(self.centralwidget)
+        self.Yaw_label.setGeometry(QtCore.QRect(730, 600, 71, 31))
+        self.Yaw_label.setObjectName("Yaw_label")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 921, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 921, 24))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -42,6 +71,9 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.Roll_label.setText(_translate("MainWindow", "Roll:"))
+        self.Pitch_label.setText(_translate("MainWindow", "Pitch:"))
+        self.Yaw_label.setText(_translate("MainWindow", "Yaw:"))
 
 class ControlMainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -51,7 +83,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
         self.ui.graphWidgetX.setBackground('w')
         # Set Title
-        self.ui.graphWidgetX.setTitle("Angle X (Roll)", color="b", size="15pt")
+        self.ui.graphWidgetX.setTitle("Angle X (Roll) in degrees", color="b", size="15pt")
         # Add Axis labels
         styles = {"color": "#f00", "font-size": "15px"}
         self.ui.graphWidgetX.setLabel("left", "Roll Angle", **styles)
@@ -65,10 +97,10 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
         self.ui.graphWidgetY.setBackground('w')
         # Set Title
-        self.ui.graphWidgetY.setTitle("Angle Y (Pitch)", color="b", size="15pt")
+        self.ui.graphWidgetY.setTitle("Angle Y (Pitch) in degrees", color="b", size="15pt")
         # Add Axis labels
         styles = {"color": "#f00", "font-size": "15px"}
-        self.ui.graphWidgetY.setLabel("left", "Roll Angular Velocity", **styles)
+        self.ui.graphWidgetY.setLabel("left", "Pitch Angle", **styles)
         self.ui.graphWidgetY.setLabel("bottom", "Time steps", **styles)
         # Add legend
         self.ui.graphWidgetY.addLegend()
@@ -79,10 +111,10 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
         self.ui.graphWidgetZ.setBackground('w')
         # Set Title
-        self.ui.graphWidgetZ.setTitle("Angle Z (Yaw)", color="b", size="15pt")
+        self.ui.graphWidgetZ.setTitle("Angle Z (Yaw) in degrees", color="b", size="15pt")
         # Add Axis labels
         styles = {"color": "#f00", "font-size": "15px"}
-        self.ui.graphWidgetZ.setLabel("left", "Angle (rad)", **styles)
+        self.ui.graphWidgetZ.setLabel("left", "Yaw Angle", **styles)
         self.ui.graphWidgetZ.setLabel("bottom", "Time steps", **styles)
         # Add legend
         self.ui.graphWidgetZ.addLegend()
@@ -94,7 +126,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         # Initial Arduino reading
         self.init_msg = arduino.readline()
         self.init_msg_vec = self.init_msg.decode('utf-8').split(',')
-        while len(self.init_msg_vec) != 10:
+        while len(self.init_msg_vec) != 13:
             self.init_msg = arduino.readline()
             self.init_msg_vec = self.init_msg.decode('utf-8').split(',')
         # Initial IMU raw data
@@ -111,58 +143,103 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.gyroZ_current = float(self.init_msg_vec[9])
 
         self.time_stamps = list(range(200))
-        #self.accelX = [randint(0,0) for _ in range(200)]
-        #self.accelY = [randint(0,0) for _ in range(200)]
-        #self.accelZ = [randint(0,0) for _ in range(200)]
-        #self.eulerX = [randint(-4,4) for _ in range(200)]
-        #self.eulerY = [randint(-4,4) for _ in range(200)]
-        #self.eulerZ = [randint(-4,4) for _ in range(200)]
-        #self.accelX_line = self.ui.graphWidgetX.plot(self.time_stamps, self.accelX, name="Accelerometer X", pen=pg.mkPen(color='r'))
-        #self.accelY_line = self.ui.graphWidgetY.plot(self.time_stamps, self.accelY, name="Accelerometer Y", pen=pg.mkPen(color='r'))
-        #self.accelZ_line = self.ui.graphWidgetZ.plot(self.time_stamps, self.accelZ, name="Accelerometer Z", pen=pg.mkPen(color='r'))
-        #self.eulerX_line = self.ui.graphWidgetX.plot(self.time_stamps, self.eulerX, name="Euler X", pen=pg.mkPen(color='r'))
-        #self.eulerY_line = self.ui.graphWidgetY.plot(self.time_stamps, self.eulerY, name="Euler Y", pen=pg.mkPen(color='r'))
-        #self.eulerZ_line = self.ui.graphWidgetZ.plot(self.time_stamps, self.eulerZ, name="Euler Z", pen=pg.mkPen(color='r'))
+
         self.est_roll = [randint(0,0) for _ in range(200)]
         self.meas_roll = [randint(1,1) for _ in range(200)]
+        self.eulerX_list = [randint(0,0) for _ in range(200)]
         self.est_roll_line = self.ui.graphWidgetX.plot(self.time_stamps, self.est_roll, name="Estimated Roll angle", pen=pg.mkPen(color='r'))
         self.meas_roll_line = self.ui.graphWidgetX.plot(self.time_stamps, self.meas_roll, name="Measured Roll angle", pen=pg.mkPen(color='b'))
-        self.est_rollVel = [randint(0,0) for _ in range(200)]
-        self.meas_rollVel = [randint(1,1) for _ in range(200)]
-        self.est_rollVel_line = self.ui.graphWidgetY.plot(self.time_stamps, self.est_rollVel, name="Estimated Roll Velocity", pen=pg.mkPen(color='r'))
-        self.meas_rollVel_line = self.ui.graphWidgetY.plot(self.time_stamps, self.meas_rollVel, name="Measured Roll Velocity", pen=pg.mkPen(color='b'))
+        #self.eulerX_line = self.ui.graphWidgetX.plot(self.time_stamps, self.eulerX_list, name="Euler Roll angle", pen=pg.mkPen(color='g'))
+        #self.est_rollVel = [randint(0,0) for _ in range(200)]
+        #self.meas_rollVel = [randint(1,1) for _ in range(200)]
+        #elf.est_rollVel_line = self.ui.graphWidgetY.plot(self.time_stamps, self.est_rollVel, name="Estimated Roll Velocity", pen=pg.mkPen(color='r'))
+        #self.meas_rollVel_line = self.ui.graphWidgetY.plot(self.time_stamps, self.meas_rollVel, name="Measured Roll Velocity", pen=pg.mkPen(color='b'))
+        self.est_pitch = [randint(0,0) for _ in range(200)]
+        self.meas_pitch = [randint(1,1) for _ in range(200)]
+        self.eulerY_list = [randint(0,0) for _ in range(200)]
+        self.est_pitch_line = self.ui.graphWidgetY.plot(self.time_stamps, self.est_pitch, name="Estimated Pitch angle", pen=pg.mkPen(color='r'))
+        self.meas_pitch_line = self.ui.graphWidgetY.plot(self.time_stamps, self.meas_pitch, name="Measured Pitch angle", pen=pg.mkPen(color='b'))
+        #self.eulerY_line = self.ui.graphWidgetY.plot(self.time_stamps, self.eulerY_list, name="Euler Pitch angle", pen=pg.mkPen(color='g'))
+
+        self.est_yaw = [randint(0,0) for _ in range(200)]
+        self.meas_yaw = [randint(1,1) for _ in range(200)]
+        self.eulerZ_list = [randint(0,0) for _ in range(200)]
+        self.est_yaw_line = self.ui.graphWidgetZ.plot(self.time_stamps, self.est_yaw, name="Estimated Yaw angle", pen=pg.mkPen(color='r'))
+        #self.eulerZ_line = self.ui.graphWidgetZ.plot(self.time_stamps, self.eulerZ_list, name="Euler Yaw angle", pen=pg.mkPen(color='g'))
+        self.meas_yaw_line = self.ui.graphWidgetZ.plot(self.time_stamps, self.meas_yaw, name="Calculated Yaw angle", pen=pg.mkPen(color='b'))
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(50)
+        self.timer.setInterval(10)
         self.timer.timeout.connect(self.plotTheGraphs)
         self.timer.start()
 
-        # Angles calculated by IMU
-        #self.eulerX_current = 0
-        #self.eulerY_current = 0
-        #self.eulerZ_current = 0
-
-        # Kalman Roll
-        self.A_roll = np.array([[0, 0],
+        ## KALMAN ##
+        self.A = np.array([[0, 0],
                            [0, 0]], dtype='float')
+        # Kalman Roll
         self.H_roll = np.array([[1, 0],
                            [0, 1]], dtype='float')
-        self.x_roll = np.array([[0],                 #Rotation angle
+        self.x_roll = np.array([[0],                 #Rotation angle (position)
                            [0]], dtype='float')      #Angular velocity
         self.Q_roll = 0
-        self.s2 = 0.2 ** 2
-        self.est_state = np.zeros(2)
+        self.s2_roll = 0.01 ** 2
+        self.est_state_roll = np.zeros(2)
         self.est_angularVel_Roll = 0
         self.est_angle_Roll = 0
         self.roll_meas = 0
-        self.delta_t = 0
-
         accelerometerX_variance = 0.00011154289877952518
         gyroscopeX_variance = 0.0203081596772978
         self.R_roll = np.array([[accelerometerX_variance, 0],
                       [0, gyroscopeX_variance]])
 
-        self.kalman_filter_roll= KalmanFilter(self.A_roll, self.H_roll, self.Q_roll, self.R_roll, self.x_roll)
+        # Kalman Pitch
+        self.H_pitch = np.array([[1, 0],
+                           [0, 1]], dtype='float')
+        self.x_pitch = np.array([[0],                 #Rotation angle (position)
+                           [0]], dtype='float')       #Angular velocity
+        self.Q_pitch = 0
+        self.s2_pitch = 0.01 ** 2
+        self.est_state_pitch = np.zeros(2)
+        self.est_angularVel_Pitch = 0
+        self.est_angle_Pitch = 0
+        self.pitch_meas = 0
+        accelerometerY_variance = 0.00025083176623752354
+        gyroscopeY_variance = 0.02365472804860408
+        self.R_pitch = np.array([[accelerometerY_variance, 0],
+                        [0, gyroscopeY_variance]])
+
+        # Kalman Yaw
+        self.H_yaw = np.array([[1, 0],
+                           [0, 1]], dtype='float')
+        self.x_yaw = np.array([[0],                 #Rotation angle (position)
+                           [0]], dtype='float')       #Angular velocity
+        self.Q_yaw = 0
+        self.s2_yaw = 0.01 ** 2
+        self.est_state_yaw = np.zeros(2)
+        self.est_angularVel_Yaw = 0
+        self.est_angle_Yaw = 0
+        self.yaw_meas = 0
+        yaw_calc_variance = 9520.89682317338
+        gyroscopeZ_variance = 0.04776449576032258
+        self.R_yaw = np.array([[yaw_calc_variance, 0],
+                        [0, gyroscopeY_variance]])
+
+        # Yaw Calculation
+        self.yaw_est = 0
+        self.mag_meanX = 0 #-17.149
+        self.mag_meanY = 0 #5.885
+        self.mag_meanZ = 0 #-1.308
+
+        self.delta_t = 0
+
+        self.kalman_filter_roll= KalmanFilter(self.A, self.H_roll, self.Q_roll, self.R_roll, self.x_roll)
+        self.kalman_filter_pitch = KalmanFilter(self.A, self.H_pitch, self.Q_pitch, self.R_pitch, self.x_pitch)
+        self.kalman_filter_yaw = KalmanFilter(self.A, self.H_yaw, self.Q_yaw, self.R_yaw, self.x_yaw)
+
+        # Euler angles from IMU internal calculation
+        self.eulerX_current = 0
+        self.eulerY_current = 0
+        self.eulerZ_current = 0
 
         # Starting a thread to listen for inputs from Arduino
         self.listenThread = Thread(target=self.readSerialInputs, args=())
@@ -177,41 +254,79 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         while True:
             msg = arduino.readline() #Read everything in the input buffer
             msgVec = msg.decode('utf-8').split(',')
-            if len(msgVec) == 10 and msgVec[0] and msgVec[1] and msgVec[2] and msgVec[3] and msgVec[4] and msgVec[5] and msgVec[6] and msgVec[7] and msgVec[8] and msgVec[9]:
-                self.time_stamp = int(msgVec[0]) / 1000
+            if len(msgVec) == 13 and msgVec[0] and msgVec[1] and msgVec[2] and msgVec[3] and msgVec[4] and msgVec[5] and msgVec[6] and msgVec[7] and msgVec[8] and msgVec[9] and msgVec[10] and msgVec[11] and msgVec[12]:
+                self.time_stamp = float(msgVec[0]) / 1000
                 self.accelX_current = float(msgVec[1])
                 self.accelY_current = float(msgVec[2])
                 self.accelZ_current = float(msgVec[3])
-                self.magX_current = float(msgVec[4])
-                self.magY_current = float(msgVec[5])
-                self.magZ_current = float(msgVec[6])
+                self.magX_current = float(msgVec[4]) - self.mag_meanX
+                self.magY_current = float(msgVec[5]) - self.mag_meanY
+                self.magZ_current = float(msgVec[6]) - self.mag_meanZ
                 self.gyroX_current = float(msgVec[7])
                 self.gyroY_current = float(msgVec[8])
                 self.gyroZ_current = float(msgVec[9])
+                self.eulerX_current = -float(msgVec[10])
+                self.eulerY_current = -float(msgVec[11])
+                self.eulerZ_current = float(msgVec[12])
                 self.delta_t = (self.time_stamp - self.last_time_stamp)
-                self.roll_meas = orientation_conversion.get_roll(np.array([[self.accelX_current, self.accelY_current, self.accelZ_current]]), degrees=True)
-                y = np.array([[self.roll_meas],
+                #if self.delta_t > 1 or self.delta_t < 0:
+                #    print('Delta T: ', self.delta_t)
+                #    print('Last time stamp: ', self.last_time_stamp)
+                #    print('Current time stamp: ', self.time_stamp)
+                self.roll_meas = orientation_conversion.get_roll(np.array([[self.accelX_current, self.accelY_current, self.accelZ_current]]), degrees=True) * 2
+                self.pitch_meas = orientation_conversion.get_pitch(np.array([[self.accelX_current, self.accelY_current, self.accelZ_current]]), degrees=True) * 2
+                # Tilt compensation for yaw calculation
+                self.yaw_est = orientation_conversion.get_yaw((self.est_angle_Pitch), (self.est_angle_Roll), np.array([[self.magX_current, self.magY_current, self.magZ_current]]), degrees=True)
+                #print("Est yaw: ", self.yaw_est)
+
+
+                # Kalman Estimate Roll
+                y_roll = np.array([[self.roll_meas],
                               [self.gyroX_current]])
-
                 self.kalman_filter_roll.predict()
-                self.kalman_filter_roll.update(y)
-                (x, P) = self.kalman_filter_roll.get_state()
-                self.est_state = x.transpose()
+                self.kalman_filter_roll.update(y_roll)
+                (x_r, P_r) = self.kalman_filter_roll.get_state()
+                self.est_state_roll = x_r.transpose()
 
+                # Kalman Estimate Pitch
+                y_pitch = np.array([[self.pitch_meas],
+                              [self.gyroY_current]])
+                self.kalman_filter_pitch.predict()
+                self.kalman_filter_pitch.update(y_pitch)
+                (x_p, P_p) = self.kalman_filter_pitch.get_state()
+                self.est_state_pitch = x_p.transpose()
 
-            self.A_roll = np.array([[1, -self.delta_t],
-                               [0, 1]], dtype='float')
+                # Kalman Estimate Yaw
+                y_yaw = np.array([[self.yaw_est],
+                              [self.gyroZ_current]])
+                self.kalman_filter_yaw.predict()
+                self.kalman_filter_yaw.update(y_yaw)
+                (x_y, P_y) = self.kalman_filter_yaw.get_state()
+                self.est_state_yaw = x_y.transpose()
+
             base_sigma = np.array([[self.delta_t ** 3 / 3, self.delta_t ** 2 / 2],
                                    [self.delta_t ** 2 / 2, self.delta_t]])
-            self.Q_roll = self.s2 * base_sigma
 
-            self.kalman_filter_roll.updateParameters(A=self.A_roll, H=self.H_roll, Q=self.Q_roll, R=self.R_roll)
-            self.est_angularVel_Roll = self.est_state.transpose()[1]
-            self.est_angle_Roll = self.est_state.transpose()[0]
+            self.A = np.array([[1, -self.delta_t],
+                               [0, 1]], dtype='float')
+            self.Q_roll = self.s2_roll * base_sigma
+            self.Q_pitch = self.s2_pitch * base_sigma
+            self.Q_yaw = self.s2_yaw * base_sigma
+
+            self.kalman_filter_roll.updateParameters(A=self.A, H=self.H_roll, Q=self.Q_roll, R=self.R_roll)
+            self.kalman_filter_pitch.updateParameters(A=self.A, H=self.H_pitch, Q=self.Q_pitch, R=self.R_pitch)
+            self.kalman_filter_yaw.updateParameters(A=self.A, H=self.H_yaw, Q=self.Q_yaw, R=self.R_yaw)
+
+            self.est_angularVel_Roll = self.est_state_roll.transpose()[1]
+            self.est_angle_Roll = self.est_state_roll.transpose()[0]
+            self.est_angularVel_Pitch = self.est_state_pitch.transpose()[1]
+            self.est_angle_Pitch = self.est_state_pitch.transpose()[0]
+            self.est_angularVel_Yaw = self.est_state_yaw.transpose()[1]
+            self.est_angle_Yaw = self.est_state_yaw.transpose()[0]
 
             self.last_time_stamp = self.time_stamp
             arduino.reset_input_buffer()
-            time.sleep(0.1)
+            time.sleep(0.01)
 
     def plotTheGraphs(self):
         self.time_stamps = self.time_stamps[1:] #Remove first element
@@ -220,32 +335,52 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.est_roll = self.est_roll[1:]
         self.est_roll.append(float(self.est_angle_Roll))
 
-        self.est_rollVel = self.est_rollVel[1:]
-        self.est_rollVel.append(float(self.est_angularVel_Roll))
-
         self.meas_roll = self.meas_roll[1:]
         self.meas_roll.append(float(self.roll_meas))
 
-        self.meas_rollVel = self.meas_rollVel[1:]
-        self.meas_rollVel.append(float(self.gyroX_current))
+        self.est_pitch = self.est_pitch[1:]
+        self.est_pitch.append(float(self.est_angle_Pitch))
+
+        self.meas_pitch = self.meas_pitch[1:]
+        self.meas_pitch.append(float(self.pitch_meas))
+
+        self.meas_yaw = self.meas_yaw[1:]
+        self.meas_yaw.append(float(self.yaw_est))
+
+        self.est_yaw = self.est_yaw[1:]
+        self.est_yaw.append(float(self.est_angle_Yaw))
+
+        #self.eulerX_list = self.eulerX_list[1:]
+        #self.eulerX_list.append(float(self.eulerX_current))
+        #self.eulerY_list = self.eulerY_list[1:]
+        #self.eulerY_list.append(float(self.eulerY_current))
+        #self.eulerZ_list = self.eulerZ_list[1:]
+        #self.eulerZ_list.append(float(self.eulerZ_current))
+
+        self.ui.dialX.setValue(int(self.est_angle_Roll))
+        self.ui.dialY.setValue(int(self.est_angle_Pitch))
+        self.ui.dialZ.setValue(int(self.est_angle_Yaw))
+
+        roll_text = 'Roll: ' + str(int(self.est_angle_Roll)) + '°'
+        pitch_text = 'Pitch: ' + str(int(self.est_angle_Pitch)) + '°'
+        yaw_text = 'Yaw: ' + str(int(self.est_angle_Yaw)) + '°'
+        self.ui.Roll_label.setText(roll_text)
+        self.ui.Pitch_label.setText(pitch_text)
+        self.ui.Yaw_label.setText(yaw_text)
+
+        #self.meas_yaw = self.meas_yaw[1:]
+        #self.meas_yaw.append(float(self.gyroZ_current))
 
         self.est_roll_line.setData(self.time_stamps, self.est_roll)
-        self.est_rollVel_line.setData(self.time_stamps, self.est_rollVel)
         self.meas_roll_line.setData(self.time_stamps, self.meas_roll)
-        self.meas_rollVel_line.setData(self.time_stamps, self.meas_rollVel)
+        self.est_pitch_line.setData(self.time_stamps, self.est_pitch)
+        self.meas_pitch_line.setData(self.time_stamps, self.meas_pitch)
+        self.est_yaw_line.setData(self.time_stamps, self.est_yaw)
+        self.meas_yaw_line.setData(self.time_stamps, self.meas_yaw)
 
-        #self.accelX = self.accelX[1:] #Remove first element
-        #self.accelX.append(float(self.accelX_current))
-
-        #self.accelY = self.accelY[1:] #Remove first element
-        #self.accelY.append(float(self.accelY_current))
-
-        #self.accelZ = self.accelZ[1:] #Remove first element
-        #self.accelZ.append(float(self.accelZ_current))
-
-        #self.accelX_line.setData(self.time_stamps, self.accelX)
-        #self.accelY_line.setData(self.time_stamps, self.accelY)
-        #self.accelZ_line.setData(self.time_stamps, self.accelZ)
+        #self.eulerX_line.setData(self.time_stamps, self.eulerX_list)
+        #self.eulerY_line.setData(self.time_stamps, self.eulerY_list)
+        #self.eulerZ_line.setData(self.time_stamps, self.eulerZ_list)
 
 if __name__ == '__main__':
     import sys
