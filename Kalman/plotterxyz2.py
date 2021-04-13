@@ -169,7 +169,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.meas_yaw_line = self.ui.graphWidgetZ.plot(self.time_stamps, self.meas_yaw, name="Calculated Yaw angle", pen=pg.mkPen(color='b'))
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(10)
+        self.timer.setInterval(5)
         self.timer.timeout.connect(self.plotTheGraphs)
         self.timer.start()
 
@@ -214,21 +214,29 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.x_yaw = np.array([[0],                 #Rotation angle (position)
                            [0]], dtype='float')       #Angular velocity
         self.Q_yaw = 0
-        self.s2_yaw = 0.01 ** 2
+        self.s2_yaw = 0.1 ** 2
         self.est_state_yaw = np.zeros(2)
         self.est_angularVel_Yaw = 0
         self.est_angle_Yaw = 0
         self.yaw_meas = 0
-        yaw_calc_variance = 9520.89682317338
+        yaw_calc_variance = 0.5
         gyroscopeZ_variance = 0.04776449576032258
         self.R_yaw = np.array([[yaw_calc_variance, 0],
                         [0, gyroscopeY_variance]])
 
         # Yaw Calculation
         self.yaw_est = 0
-        self.mag_meanX = 0 #-17.149
-        self.mag_meanY = 0 #5.885
-        self.mag_meanZ = 0 #-1.308
+        self.mag_meanX = -17.149
+        self.mag_meanY = 5.885
+        self.mag_meanZ = -1.308
+        self.current_mean_mag_x = 0
+        self.magnetoX = np.zeros(4)
+        self.current_mean_mag_y = 0
+        self.magnetoY = np.zeros(4)
+        self.current_mean_mag_z = 0
+        self.magnetoZ = np.zeros(4)
+        #self.yaw_estimates = np.zeros(4)
+        #self.current_mean_yaw_est = 0
 
         self.delta_t = 0
 
@@ -236,15 +244,47 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.kalman_filter_pitch = KalmanFilter(self.A, self.H_pitch, self.Q_pitch, self.R_pitch, self.x_pitch)
         self.kalman_filter_yaw = KalmanFilter(self.A, self.H_yaw, self.Q_yaw, self.R_yaw, self.x_yaw)
 
+        ## MAGNETOMETER KALMAN ##
+        self.A_mag = np.array([[1]])
+        self.x_magX = np.array([[0]])
+        self.x_magY = np.array([[0]])
+        self.x_magZ = np.array([[0]])
+        self.H_mag = np.array([[1]])
+        self.Q_magX = 0
+        self.Q_magY = 0
+        self.Q_magZ = 0
+        self.s2_magX = 0.1 ** 2
+        self.s2_magY = 0.1 ** 2
+        self.s2_magZ = 0.1 ** 2
+        self.est_state_magX = 0
+        self.est_state_magY = 0
+        self.est_state_magZ = 0
+        self.R_magX = 0.4017811230975991
+        self.R_magY = 2.900135890311062
+        self.R_magZ = 0.3936153217491893
+
+        self.kalman_filter_magX = KalmanFilter(self.A_mag, self.H_mag, self.Q_magX, self.R_magX, self.x_magX)
+        self.kalman_filter_magY = KalmanFilter(self.A_mag, self.H_mag, self.Q_magY, self.R_magY, self.x_magY)
+        self.kalman_filter_magZ = KalmanFilter(self.A_mag, self.H_mag, self.Q_magZ, self.R_magZ, self.x_magZ)
+
         # Euler angles from IMU internal calculation
         self.eulerX_current = 0
         self.eulerY_current = 0
         self.eulerZ_current = 0
 
+        # Magnetometer thread
+        self.magnetThread = Thread(target=self.magnetometerInputs, args=())
+        self.magnetThread.daemon = True
+        self.startMagnetThread()
+
         # Starting a thread to listen for inputs from Arduino
         self.listenThread = Thread(target=self.readSerialInputs, args=())
         self.listenThread.daemon = True
         self.startListenThread()
+
+    def startMagnetThread(self):
+        self.magnetThread.start()
+        return self
 
     def startListenThread(self):
         self.listenThread.start()
@@ -269,16 +309,29 @@ class ControlMainWindow(QtWidgets.QMainWindow):
                 self.eulerY_current = -float(msgVec[11])
                 self.eulerZ_current = float(msgVec[12])
                 self.delta_t = (self.time_stamp - self.last_time_stamp)
-                #if self.delta_t > 1 or self.delta_t < 0:
-                #    print('Delta T: ', self.delta_t)
-                #    print('Last time stamp: ', self.last_time_stamp)
-                #    print('Current time stamp: ', self.time_stamp)
+                #print(self.delta_t)
+
+                # FIR filter for magnetometer
+                # self.magnetoX = self.magnetoX[1:]
+                # self.magnetoX = np.append(self.magnetoX, float(self.magX_current))
+                # self.current_mean_mag_x = np.mean(self.magnetoX)
+                #
+                # self.magnetoY = self.magnetoY[1:]
+                # self.magnetoY = np.append(self.magnetoY, float(self.magY_current))
+                # self.current_mean_mag_y = np.mean(self.magnetoY)
+                #
+                # self.magnetoZ = self.magnetoZ[1:]
+                # self.magnetoZ = np.append(self.magnetoZ, float(self.magZ_current))
+                # self.current_mean_mag_z = np.mean(self.magnetoZ)
+
+                #print("Measured Mag Y: ", self.magY_current)
+
+                #print("Magneto mean X: ", self.current_mean_mag_x)
+                #print("Magneto mean Y: ", self.current_mean_mag_y)
+                #print("Magneto mean Z: ", self.current_mean_mag_z)
+
                 self.roll_meas = orientation_conversion.get_roll(np.array([[self.accelX_current, self.accelY_current, self.accelZ_current]]), degrees=True) * 2
                 self.pitch_meas = orientation_conversion.get_pitch(np.array([[self.accelX_current, self.accelY_current, self.accelZ_current]]), degrees=True) * 2
-                # Tilt compensation for yaw calculation
-                self.yaw_est = orientation_conversion.get_yaw((self.est_angle_Pitch), (self.est_angle_Roll), np.array([[self.magX_current, self.magY_current, self.magZ_current]]), degrees=True)
-                #print("Est yaw: ", self.yaw_est)
-
 
                 # Kalman Estimate Roll
                 y_roll = np.array([[self.roll_meas],
@@ -287,6 +340,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
                 self.kalman_filter_roll.update(y_roll)
                 (x_r, P_r) = self.kalman_filter_roll.get_state()
                 self.est_state_roll = x_r.transpose()
+                self.est_angularVel_Roll = self.est_state_roll.transpose()[1]
+                self.est_angle_Roll = self.est_state_roll.transpose()[0]
 
                 # Kalman Estimate Pitch
                 y_pitch = np.array([[self.pitch_meas],
@@ -295,14 +350,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
                 self.kalman_filter_pitch.update(y_pitch)
                 (x_p, P_p) = self.kalman_filter_pitch.get_state()
                 self.est_state_pitch = x_p.transpose()
-
-                # Kalman Estimate Yaw
-                y_yaw = np.array([[self.yaw_est],
-                              [self.gyroZ_current]])
-                self.kalman_filter_yaw.predict()
-                self.kalman_filter_yaw.update(y_yaw)
-                (x_y, P_y) = self.kalman_filter_yaw.get_state()
-                self.est_state_yaw = x_y.transpose()
+                self.est_angularVel_Pitch = self.est_state_pitch.transpose()[1]
+                self.est_angle_Pitch = self.est_state_pitch.transpose()[0]
 
             base_sigma = np.array([[self.delta_t ** 3 / 3, self.delta_t ** 2 / 2],
                                    [self.delta_t ** 2 / 2, self.delta_t]])
@@ -312,21 +361,58 @@ class ControlMainWindow(QtWidgets.QMainWindow):
             self.Q_roll = self.s2_roll * base_sigma
             self.Q_pitch = self.s2_pitch * base_sigma
             self.Q_yaw = self.s2_yaw * base_sigma
+            self.Q_magX = self.s2_magX * self.delta_t
+            self.Q_magY = self.s2_magY * self.delta_t
+            self.Q_magZ = self.s2_magZ * self.delta_t
 
             self.kalman_filter_roll.updateParameters(A=self.A, H=self.H_roll, Q=self.Q_roll, R=self.R_roll)
             self.kalman_filter_pitch.updateParameters(A=self.A, H=self.H_pitch, Q=self.Q_pitch, R=self.R_pitch)
             self.kalman_filter_yaw.updateParameters(A=self.A, H=self.H_yaw, Q=self.Q_yaw, R=self.R_yaw)
-
-            self.est_angularVel_Roll = self.est_state_roll.transpose()[1]
-            self.est_angle_Roll = self.est_state_roll.transpose()[0]
-            self.est_angularVel_Pitch = self.est_state_pitch.transpose()[1]
-            self.est_angle_Pitch = self.est_state_pitch.transpose()[0]
-            self.est_angularVel_Yaw = self.est_state_yaw.transpose()[1]
-            self.est_angle_Yaw = self.est_state_yaw.transpose()[0]
+            self.kalman_filter_magX.updateParameters(A=self.A_mag, H=self.H_mag, Q=self.Q_magX, R=self.R_magX)
+            self.kalman_filter_magY.updateParameters(A=self.A_mag, H=self.H_mag, Q=self.Q_magY, R=self.R_magY)
+            self.kalman_filter_magZ.updateParameters(A=self.A_mag, H=self.H_mag, Q=self.Q_magZ, R=self.R_magZ)
 
             self.last_time_stamp = self.time_stamp
             arduino.reset_input_buffer()
             time.sleep(0.01)
+
+    def magnetometerInputs(self):
+        while True:
+            # Tilt compensation for yaw calculation
+            self.yaw_est = (orientation_conversion.get_yaw((self.est_angle_Pitch), (self.est_angle_Roll), np.array([[self.est_state_magX, self.est_state_magY, self.est_state_magZ]]), degrees=True) + 180)
+
+            # Kalman Estimate Yaw
+            y_yaw = np.array([[self.yaw_est],
+                          [self.gyroZ_current]])
+            self.kalman_filter_yaw.predict()
+            self.kalman_filter_yaw.update(y_yaw)
+            (x_y, P_y) = self.kalman_filter_yaw.get_state()
+            self.est_state_yaw = x_y.transpose()
+            self.est_angularVel_Yaw = self.est_state_yaw.transpose()[1]
+            self.est_angle_Yaw = self.est_state_yaw.transpose()[0]
+
+            # Kalman Estimate Magneto X
+            y_magX = self.magX_current
+            self.kalman_filter_magX.predict()
+            self.kalman_filter_magX.update(y_magX)
+            (x_magnetX, P_magX) = self.kalman_filter_magX.get_state()
+            self.est_state_magX = x_magnetX[0][0]
+            print("Kalman filtered Mag X: ", self.est_state_magX)
+            # Kalman Estimate Magneto Y
+            y_magY = self.magY_current
+            self.kalman_filter_magY.predict()
+            self.kalman_filter_magY.update(y_magY)
+            (x_magnetY, P_magY) = self.kalman_filter_magY.get_state()
+            self.est_state_magY = x_magnetY[0][0]
+            print("Kalman filtered Mag Y: ", self.est_state_magY)
+            # Kalman Estimate Magneto Z
+            y_magZ = self.magZ_current
+            self.kalman_filter_magZ.predict()
+            self.kalman_filter_magZ.update(y_magZ)
+            (x_magnetZ, P_magZ) = self.kalman_filter_magZ.get_state()
+            self.est_state_magZ = x_magnetZ[0][0]
+            print("Kalman filtered Mag Z: ", self.est_state_magZ)
+
 
     def plotTheGraphs(self):
         self.time_stamps = self.time_stamps[1:] #Remove first element
@@ -346,6 +432,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
         self.meas_yaw = self.meas_yaw[1:]
         self.meas_yaw.append(float(self.yaw_est))
+        #self.meas_yaw.append(float(self.current_mean_yaw_est))
 
         self.est_yaw = self.est_yaw[1:]
         self.est_yaw.append(float(self.est_angle_Yaw))
@@ -360,10 +447,12 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.ui.dialX.setValue(int(self.est_angle_Roll))
         self.ui.dialY.setValue(int(self.est_angle_Pitch))
         self.ui.dialZ.setValue(int(self.est_angle_Yaw))
+        #self.ui.dialZ.setValue(int(self.current_mean_yaw_est))
 
         roll_text = 'Roll: ' + str(int(self.est_angle_Roll)) + '°'
         pitch_text = 'Pitch: ' + str(int(self.est_angle_Pitch)) + '°'
         yaw_text = 'Yaw: ' + str(int(self.est_angle_Yaw)) + '°'
+        #yaw_text = 'Yaw: ' + str(int(self.current_mean_yaw_est)) + '°'
         self.ui.Roll_label.setText(roll_text)
         self.ui.Pitch_label.setText(pitch_text)
         self.ui.Yaw_label.setText(yaw_text)
