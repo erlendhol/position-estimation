@@ -44,10 +44,11 @@ def get_yaw(pitch, roll, m, degrees=True):
     s_phi = math.sin(math.radians(phi))
     c_theta = math.cos(math.radians(theta))
     s_theta = math.sin(math.radians(theta))
-
-    norm = np.linalg.norm(m)
+    mag = m.T
+    # norm = np.linalg.norm(m)
+    norm = math.sqrt((mag[0]**2) + (mag[1]**2) + (mag[2]**2))
     if norm > 0:
-        m_norm = np.divide(m.T, norm)
+        m_norm = np.divide(mag, norm)
     
     
         R = np.array([[c_theta, s_theta*s_phi, s_theta*c_phi],
@@ -56,7 +57,10 @@ def get_yaw(pitch, roll, m, degrees=True):
         b = R @ m_norm
 
         psi = math.atan2(-b[1], b[0])
-        return math.degrees(psi)
+        if degrees:
+            return math.degrees(psi)
+        else:
+            return psi
     else:
         return 0
 
