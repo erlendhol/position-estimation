@@ -18,7 +18,7 @@
 */
 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (100)
+#define BNO055_SAMPLERATE_DELAY_MS (50)
 
 const int trigPin = 11;           //connects to the trigger pin on the distance sensor
 const int echoPin = 12;           //connects to the echo pin on the distance sensor
@@ -46,9 +46,9 @@ void setup(void)
 {
   Serial.begin(115200);
   //Serial.println("Orientation Sensor Raw Data Test"); Serial.println("");
-  pinMode(trigPin, OUTPUT);   //the trigger pin will output pulses of electricity
-  pinMode(echoPin, INPUT);    //the echo pin will measure the duration of pulses coming back from the distance sensor
-  pinMode(13, OUTPUT);
+  //pinMode(trigPin, OUTPUT);   //the trigger pin will output pulses of electricity
+  //pinMode(echoPin, INPUT);    //the echo pin will measure the duration of pulses coming back from the distance sensor
+  //pinMode(13, OUTPUT);
   /* Initialise the sensor */
   if(!bno.begin())
   {
@@ -126,12 +126,12 @@ void loop(void)
   imu::Vector<3> magneto = bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
   imu::Vector<3> gravity = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
 
-  distance = getDistance();   //variable to store the distance measured by the sensor
+  //distance = getDistance();   //variable to store the distance measured by the sensor
 
 
    if(magnetometer)
   {
-    Serial.println(millis() + String(",") + magneto.x() + String(",") + magneto.y() + String(",") + magneto.z());
+    Serial.println(millis() + String(",") + (magneto.x()*10) + String(",") + (magneto.y()*10) + String(",") + (magneto.z()*10));
   }
 
   if(gyroscope)
@@ -161,7 +161,7 @@ void loop(void)
 
   if(acc_mag_gyro)
   {
-    Serial.println(millis() + String(",") + acc.x() + String(",") + acc.y() + String(",") + acc.z() + String(",") + magneto.x() + String(",") + magneto.y() + String(",") + magneto.z() + String(",") + gyro.x() + String(",") + gyro.y() + String(",") + gyro.z());
+    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (magneto.x()+33.25) + String(",") + (magneto.y()+2.9375) + String(",") + (magneto.z()+51.6875) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125) + String(",") + euler.z() + String(",") + euler.y() + String(",") + euler.x());
   }
   //Serial.println(millis() + String(",") + acc.x() + String(",") + acc.y() + String(",") + acc.z() + String(",") + magneto.x() + String(",") + magneto.y() + String(",") + magneto.z() + String(",") + euler.x() + String(",") + euler.y() + String(",") + euler.z());
   //Serial.println(gyro.x());
