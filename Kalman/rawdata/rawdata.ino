@@ -18,7 +18,13 @@
 */
 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (50)
+#define BNO055_SAMPLERATE_DELAY_MS (34)
+
+/* Set the values of the configuration registers of the sensors */
+#define GYRO_CONFIG0 (0x0C)
+#define GYRO_CONFIG1 (0x00)
+#define ACCEL_CONFIG (0x10)
+#define MAG_CONFIG (0x1F)
 
 const int trigPin = 11;           //connects to the trigger pin on the distance sensor
 const int echoPin = 12;           //connects to the echo pin on the distance sensor
@@ -57,6 +63,18 @@ void setup(void)
     while(1);
   }
 
+  /* Update the sensor config registers */
+  bno.setMode(0x00);
+  delay(100);
+  bno.write8(Adafruit_BNO055::BNO055_PAGE_ID_ADDR, 0x01);
+  delay(100);
+  bno.write8(Adafruit_BNO055::MAG_CONFIG_ADDR, MAG_CONFIG);
+  bno.write8(Adafruit_BNO055::ACCEL_CONFIG_ADDR, ACCEL_CONFIG);
+  bno.write8(Adafruit_BNO055::GYRO_CONFIG0_ADDR, GYRO_CONFIG0);
+  bno.write8(Adafruit_BNO055::GYRO_CONFIG1_ADDR, GYRO_CONFIG1);
+  /* Set BNO055 to AMG mode (accel-mag-gyro) */
+  bno.setMode(0x07);
+  
   delay(1000);
 
   /* Display the current temperature */
@@ -140,7 +158,7 @@ void loop(void)
 
    if(magnetometer)
   {
-    Serial.println(millis() + String(",") + (magneto.x()*10) + String(",") + (magneto.y()*10) + String(",") + (magneto.z()*10));
+    Serial.println(millis() + String("  ") + (xm_cal) + String("  ") + (ym_cal) + String("  ") + (zm_cal));
   }
 
   if(gyroscope)
@@ -170,7 +188,7 @@ void loop(void)
 
   if(acc_mag_gyro)
   {
-    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125) + String(",") + euler.z() + String(",") + euler.y() + String(",") + euler.x());
+    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125));
   }
 
 //  if(acc_mag_gyro)
