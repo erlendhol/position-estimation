@@ -18,7 +18,7 @@
 */
 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (34)
+#define BNO055_SAMPLERATE_DELAY_MS (50)
 
 /* Set the values of the configuration registers of the sensors */
 #define GYRO_CONFIG0 (0x0C)
@@ -30,6 +30,9 @@ const int trigPin = 11;           //connects to the trigger pin on the distance 
 const int echoPin = 12;           //connects to the echo pin on the distance sensor
 
 float distance = 0;               //stores the distance measured by the distance sensor
+float delta_t = 0;
+float time_stamp = 0;
+float last_time_stamp = 0;
 
 boolean magnetometer = false;
 boolean gyroscope = false;
@@ -130,6 +133,8 @@ void setup(void)
 /**************************************************************************/
 void loop(void)
 {
+  time_stamp = millis();
+  delta_t = (time_stamp - last_time_stamp)/1000;
   // Possible vector values can be:
   // - VECTOR_ACCELEROMETER - m/s^2
   // - VECTOR_MAGNETOMETER  - uT
@@ -158,7 +163,7 @@ void loop(void)
 
    if(magnetometer)
   {
-    Serial.println(millis() + String("  ") + (xm_cal) + String("  ") + (ym_cal) + String("  ") + (zm_cal));
+    Serial.println(millis() + String("  ") + (magneto.x()) + String("  ") + (magneto.y()) + String("  ") + (magneto.z()));
   }
 
   if(gyroscope)
@@ -188,7 +193,7 @@ void loop(void)
 
   if(acc_mag_gyro)
   {
-    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125));
+    Serial.println(delta_t + String(",") + (acc.x()) + String(",") + (acc.y()) + String(",") + (acc.z()) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
   }
 
 //  if(acc_mag_gyro)
@@ -252,7 +257,7 @@ void loop(void)
 //  Serial.print(accel, DEC);
 //  Serial.print(" Mag=");
 //  Serial.println(mag, DEC);
-
+  last_time_stamp = time_stamp;
   delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
