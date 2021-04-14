@@ -125,7 +125,16 @@ void loop(void)
   imu::Vector<3> gyro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
   imu::Vector<3> magneto = bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
   imu::Vector<3> gravity = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
+  float xm_off, ym_off, zm_off, xm_cal, ym_cal, zm_cal;
 
+  xm_off = magneto.x()*10 + 4.05;
+  ym_off = magneto.y()*10 + 1.42;
+  zm_off = magneto.z()*10 + 1.89;
+
+  xm_cal = 0.831897*xm_off + 0.004453*ym_off + 0.001301*zm_off;
+  ym_cal = 0.004453*xm_off + 0.832150*ym_off - 0.004434*zm_off;
+  zm_cal = 0.001301*xm_off - 0.004434*ym_off + 0.781556*zm_off;
+  
   //distance = getDistance();   //variable to store the distance measured by the sensor
 
 
@@ -161,8 +170,13 @@ void loop(void)
 
   if(acc_mag_gyro)
   {
-    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (magneto.x()+33.25) + String(",") + (magneto.y()+2.9375) + String(",") + (magneto.z()+51.6875) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125) + String(",") + euler.z() + String(",") + euler.y() + String(",") + euler.x());
+    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125) + String(",") + euler.z() + String(",") + euler.y() + String(",") + euler.x());
   }
+
+//  if(acc_mag_gyro)
+//  {
+//    Serial.println(millis() + String(",") + (acc.x()+0.34) + String(",") + (acc.y()+0.46) + String(",") + (acc.z()+0.3) + String(",") + (magneto.x()+33.25) + String(",") + (magneto.y()+2.9375) + String(",") + (magneto.z()+51.6875) + String(",") + (gyro.x()+0.125) + String(",") + (gyro.y()+0.125) + String(",") + (gyro.z()+0.125) + String(",") + euler.z() + String(",") + euler.y() + String(",") + euler.x());
+//  }
   //Serial.println(millis() + String(",") + acc.x() + String(",") + acc.y() + String(",") + acc.z() + String(",") + magneto.x() + String(",") + magneto.y() + String(",") + magneto.z() + String(",") + euler.x() + String(",") + euler.y() + String(",") + euler.z());
   //Serial.println(gyro.x());
   //Linear Acceleration
