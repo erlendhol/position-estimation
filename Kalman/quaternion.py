@@ -9,13 +9,13 @@ def multiply(q0, q1):
     :param q0: array containing the first quaternion
     :param q1: array containing the second quaternion
     """
-    w0, x0, y0, z0 = q0
-    w1, x1, y1, z1 = q1
+    w0, x0, y0, z0 = q0[0], q[1], q[2], q[3]
+    w1, x1, y1, z1 = q1[0], q[1], q[2], q[3]
     w = w0*w1 - x0*x1 - y0*y1 - z0*z1
     x = w0*x1 + x0*w1 + y0*z1 - z0*y1
     y = w0*y1 + y0*w1 + z0*x1 - x0*z1
     z = w0*z1 + z0*w1 + x0*y1 - y0*x1
-    return [w, x, y, z]
+    return np.array([w, x, y, z])
     
 def euler_to_quaternion(r):
     """
@@ -54,7 +54,7 @@ def quaternion_to_euler(q, as_degrees=True):
 
 
 if __name__ == '__main__':
-    q0 = [1, 2, 3, 4]
-    q1 = [4, 3, 2, 1]
+    q0 = np.array([[1, 2, 3, 4]])
+    q1 = np.array([[4, 3, 2, 1]])
     q2 = multiply(q0, q1)
     print(q2)
