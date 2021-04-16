@@ -20,7 +20,18 @@ def multiply(q0, q1):
     y = w0*y1 + y0*w1 + z0*x1 - x0*z1
     z = w0*z1 + z0*w1 + x0*y1 - y0*x1
     return np.array([w, x, y, z])
-    
+
+def conjugate(q0):
+    """
+    Calculates the quaternion conjugate
+    :param q0: array containing the quaternion to be conjugated
+    """
+    if q0.shape != (4, 1):
+        q0 = q0.T
+    w0, x0, y0, z0 = q0[0], q0[1], q0[2], q0[3]
+    x0, y0, z0 = -x0, -y0, -z0
+    return np.array([w0, x0, y0, z0])
+
 def euler_to_quaternion(r):
     """
     Converts from Euler angles(degrees) to Quaternions \n
