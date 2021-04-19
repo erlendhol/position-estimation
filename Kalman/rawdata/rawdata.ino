@@ -21,16 +21,16 @@
 #define BNO055_SAMPLERATE_DELAY_MS (50)
 
 /* Set the values of the configuration registers of the sensors */
-#define GYRO_CONFIG0 (0x0C)
+#define GYRO_CONFIG0 (0x38)
 #define GYRO_CONFIG1 (0x00)
-#define ACCEL_CONFIG (0x10)
-#define MAG_CONFIG (0x1F)
+#define ACCEL_CONFIG (0x0D)
+#define MAG_CONFIG (0x1D)
 
 const int trigPin = 11;           //connects to the trigger pin on the distance sensor
 const int echoPin = 12;           //connects to the echo pin on the distance sensor
 
 float distance = 0;               //stores the distance measured by the distance sensor
-float delta_t = 0;
+float delta_t = 0.05;
 float time_stamp = 0;
 float last_time_stamp = 0;
 
@@ -75,6 +75,8 @@ void setup(void)
   bno.write8(Adafruit_BNO055::ACCEL_CONFIG_ADDR, ACCEL_CONFIG);
   bno.write8(Adafruit_BNO055::GYRO_CONFIG0_ADDR, GYRO_CONFIG0);
   bno.write8(Adafruit_BNO055::GYRO_CONFIG1_ADDR, GYRO_CONFIG1);
+  //bno.setAxisRemap(Adafruit_BNO055::REMAP_CONFIG_P0);
+  //bno.setAxisSign(Adafruit_BNO055::REMAP_SIGN_P4);
   /* Set BNO055 to AMG mode (accel-mag-gyro) */
   bno.setMode(0x07);
   
@@ -133,8 +135,8 @@ void setup(void)
 /**************************************************************************/
 void loop(void)
 {
-  time_stamp = millis();
-  delta_t = (time_stamp - last_time_stamp)/1000;
+//  time_stamp = millis();
+//  delta_t = (time_stamp - last_time_stamp)/1000;
   // Possible vector values can be:
   // - VECTOR_ACCELEROMETER - m/s^2
   // - VECTOR_MAGNETOMETER  - uT
@@ -150,20 +152,24 @@ void loop(void)
   imu::Vector<3> gravity = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
   float xm_off, ym_off, zm_off, xm_cal, ym_cal, zm_cal;
 
-  xm_off = magneto.x()*10 + 4.05;
-  ym_off = magneto.y()*10 + 1.42;
-  zm_off = magneto.z()*10 + 1.89;
+  xm_off = magneto.x() + 129.66;
+  ym_off = magneto.y() - 149.785;
+  zm_off = magneto.z() - 119.69;
 
-  xm_cal = 0.831897*xm_off + 0.004453*ym_off + 0.001301*zm_off;
-  ym_cal = 0.004453*xm_off + 0.832150*ym_off - 0.004434*zm_off;
-  zm_cal = 0.001301*xm_off - 0.004434*ym_off + 0.781556*zm_off;
+  //Scale factor x:  1.0636341343795979
+  //Scale factor y:  1.175314997967755
+  //Scale factor z:  0.8271357742181541
+
+  xm_cal = 1.0636341343795979*xm_off;
+  ym_cal = 1.175314997967755*ym_off;
+  zm_cal = 0.8271357742181541*zm_off;
   
   //distance = getDistance();   //variable to store the distance measured by the sensor
 
 
    if(magnetometer)
   {
-    Serial.println(millis() + String("  ") + (magneto.x()) + String("  ") + (magneto.y()) + String("  ") + (magneto.z()));
+    Serial.println(millis() + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal));
   }
 
   if(gyroscope)
@@ -194,6 +200,7 @@ void loop(void)
   if(acc_mag_gyro)
   {
     Serial.println(delta_t + String(",") + (acc.x()) + String(",") + (acc.y()) + String(",") + (acc.z()) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
+    //Serial.write(delta_t + String(",") + (acc.x()) + String(",") + (acc.y()) + String(",") + (acc.z()) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
   }
 
 //  if(acc_mag_gyro)
@@ -257,7 +264,8 @@ void loop(void)
 //  Serial.print(accel, DEC);
 //  Serial.print(" Mag=");
 //  Serial.println(mag, DEC);
-  last_time_stamp = time_stamp;
+//  last_time_stamp = time_stamp;
+  //Serial.flush();
   delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
