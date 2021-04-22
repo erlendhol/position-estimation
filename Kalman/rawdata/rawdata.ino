@@ -19,12 +19,14 @@
 
 /* Set the delay between fresh samples */
 #define BNO055_SAMPLERATE_DELAY_MS (50)
+#define NED_AXIS_MAP (0x21)
+#define NED_AXIS_SIGN (0x01)
 
 /* Set the values of the configuration registers of the sensors */
 #define GYRO_CONFIG0 (0x38)
 #define GYRO_CONFIG1 (0x00)
-#define ACCEL_CONFIG (0x0D)
-#define MAG_CONFIG (0x1D)
+#define ACCEL_CONFIG (0x0F)
+#define MAG_CONFIG (0x7D)
 
 const int trigPin = 11;           //connects to the trigger pin on the distance sensor
 const int echoPin = 12;           //connects to the echo pin on the distance sensor
@@ -41,6 +43,7 @@ boolean accelerometer = false;
 boolean euler_meas = false;
 boolean gravity_meas = false;
 boolean acc_mag_gyro = true;
+boolean display_offsets = false;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -69,16 +72,27 @@ void setup(void)
   /* Update the sensor config registers */
   bno.setMode(0x00);
   delay(100);
+  //bno.write8(Adafruit_BNO055::BNO055_UNIT_SEL_ADDR, 0x80);
+  bno.setAxisRemap(0x24);
+  bno.setAxisSign(0x02);
+  //delay(25);
+  //Serial.println(bno.read8(Adafruit_BNO055::BNO055_UNIT_SEL_ADDR));
+  delay(25);
   bno.write8(Adafruit_BNO055::BNO055_PAGE_ID_ADDR, 0x01);
   delay(100);
-  bno.write8(Adafruit_BNO055::MAG_CONFIG_ADDR, MAG_CONFIG);
+  //bno.write8(Adafruit_BNO055::MAG_CONFIG_ADDR, MAG_CONFIG);
   bno.write8(Adafruit_BNO055::ACCEL_CONFIG_ADDR, ACCEL_CONFIG);
   bno.write8(Adafruit_BNO055::GYRO_CONFIG0_ADDR, GYRO_CONFIG0);
   bno.write8(Adafruit_BNO055::GYRO_CONFIG1_ADDR, GYRO_CONFIG1);
-  //bno.setAxisRemap(Adafruit_BNO055::REMAP_CONFIG_P0);
-  //bno.setAxisSign(Adafruit_BNO055::REMAP_SIGN_P4);
+  
+ 
+
+  adafruit_bno055_offsets_t calibrationData;
+  sensor_t sensor;
+  
   /* Set BNO055 to AMG mode (accel-mag-gyro) */
   bno.setMode(0x07);
+  //bno.setMode(0x0C);
   
   delay(1000);
 
@@ -89,7 +103,7 @@ void setup(void)
 //  Serial.println(" C");
 //  Serial.println("");
 
-  bno.setExtCrystalUse(true);
+  bno.setExtCrystalUse(false);
 
 //  if(magnetometer)
 //  {
@@ -150,26 +164,27 @@ void loop(void)
   imu::Vector<3> gyro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
   imu::Vector<3> magneto = bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
   imu::Vector<3> gravity = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
-  float xm_off, ym_off, zm_off, xm_cal, ym_cal, zm_cal;
+  double xm_off, ym_off, zm_off, xm_cal, ym_cal, zm_cal;
 
-  xm_off = magneto.x() + 129.66;
-  ym_off = magneto.y() - 149.785;
-  zm_off = magneto.z() - 119.69;
 
-  //Scale factor x:  1.0636341343795979
+  xm_off = -magneto.x() + 75.81;
+  ym_off = -magneto.y() + 124.53;
+  zm_off = -magneto.z() - 96.595;
+
+  //Scale factor x:  1.0636341343
   //Scale factor y:  1.175314997967755
   //Scale factor z:  0.8271357742181541
 
-  xm_cal = 1.0636341343795979*xm_off;
-  ym_cal = 1.175314997967755*ym_off;
-  zm_cal = 0.8271357742181541*zm_off;
+  xm_cal = 0.8928725038*xm_off;
+  ym_cal = 1.3351249540*ym_off;
+  zm_cal = 0.8841532049*zm_off;
   
   //distance = getDistance();   //variable to store the distance measured by the sensor
 
 
    if(magnetometer)
   {
-    Serial.println(millis() + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal));
+    Serial.println(millis() + String(",") + (-magneto.x()) + String(",") + (-magneto.y()) + String(",") + (-magneto.z()));
   }
 
   if(gyroscope)
@@ -269,6 +284,29 @@ void loop(void)
   delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
+void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
+{
+    Serial.print("Accelerometer: ");
+    Serial.print(calibData.accel_offset_x); Serial.print(" ");
+    Serial.print(calibData.accel_offset_y); Serial.print(" ");
+    Serial.print(calibData.accel_offset_z); Serial.print(" ");
+
+    Serial.print("\nGyro: ");
+    Serial.print(calibData.gyro_offset_x); Serial.print(" ");
+    Serial.print(calibData.gyro_offset_y); Serial.print(" ");
+    Serial.print(calibData.gyro_offset_z); Serial.print(" ");
+
+    Serial.print("\nMag: ");
+    Serial.print(calibData.mag_offset_x); Serial.print(" ");
+    Serial.print(calibData.mag_offset_y); Serial.print(" ");
+    Serial.print(calibData.mag_offset_z); Serial.print(" ");
+
+    Serial.print("\nAccel Radius: ");
+    Serial.print(calibData.accel_radius);
+
+    Serial.print("\nMag Radius: ");
+    Serial.print(calibData.mag_radius);
+}
 
 //RETURNS THE DISTANCE MEASURED BY THE HC-SR04 DISTANCE SENSOR
 float getDistance()
