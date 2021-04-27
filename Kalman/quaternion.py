@@ -45,6 +45,30 @@ def euler_to_quaternion(r):
     qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
     return np.array([qw, qx, qy, qz])
 
+def get_axis_angle(q):
+    w, x, y, z = q[0], q[1], q[2], q[3]
+    norm = math.sqrt(x**2 + y**2 + z**2)
+    a = np.divide(([x, y, z]), norm)
+    theta = 2 * math.atan2(norm, w)
+    roll, pitch, yaw = a * theta
+    return np.array(np.degrees([roll, pitch, yaw]))
+
+def to_axis_angle(a):
+    a = np.radians(a)
+    x, y, z = a[0], a[1], a[2]
+    norm = math.sqrt(x**2 + y**2 + z**2)
+    x, y, z = np.divide([x, y, z], norm)
+    theta = a[0]/x
+    return np.array([x, y, z, np.degrees(theta)])
+
+def axis_angle_to_quat(a):
+    theta = np.radians(a[3])
+    s = math.sin(theta/2)
+    w = math.cos(theta/2)
+    x = a[0] * s
+    y = a[1] * s
+    z = a[2] * s
+    return np.array([w, x, y, z])
 
 def quaternion_to_euler(q, as_degrees=True):
     """
@@ -75,8 +99,16 @@ def normalize(q):
     return q_norm
 
 if __name__ == '__main__':
-    q0 = np.array([[1, 2, 3, 4]])
-    q1 = np.array([[4, 3, 2, 1]])
-    q2 = multiply(q0, q1)
-    q3 = normalize(q2)
-    print(q3)
+    # q0 = np.array([[1, 2, 3, 4]])
+    # q1 = np.array([[4, 3, 2, 1]])
+    # q2 = multiply(q0, q1)
+    # q3 = normalize(q2)
+    # print(q3)
+    # q = np.array([0.8497105, 0.3728217, 0, 0.3728217])
+    # angles = get_axis_angle(q)
+    # print(angles)
+    a = to_axis_angle(np.array([73, 17, 32]))
+    print(a[3])
+    q = axis_angle_to_quat(a)
+    angles = get_axis_angle(q)
+    print(angles)
