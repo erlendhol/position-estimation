@@ -15,8 +15,8 @@ def updateBoatFrame(boom, slew, boatframe, sensorframe):
     #angles = sf.get_orientation()
     #print(angles)
     # Transforms the sensor pitch and roll values to be aligned with the boat
-    rot_quat = ht.euler_to_quaternion([0, -boom, -slew])
-    
+    rot_quat = ht.euler_to_quaternion([boom, 0, slew])
+
     new_sensor_orientation = quaternion.multiply(quaternion.multiply(rot_quat, sf.get_quat()), quaternion.conjugate(rot_quat))
     
     
@@ -110,10 +110,10 @@ class Frame(object):
 
 if __name__ == '__main__':
     world_frame = Frame()
-    sensor_frame = Frame(np.array([2, 2, 2]), orientation=np.array([0, 0, 0]))
-    boat_frame = Frame(np.array([0, 0, 0]), orientation=np.array([0, 0, 0]))
+    sensor_frame = Frame(np.array([2, 2, 2]), orientation=np.array([0, 0, 0]), parentFrame=world_frame)
+    boat_frame = Frame(np.array([-2, -2, -2]), orientation=np.array([0, 0, 0]), parentFrame=sensor_frame)
     #boat_frame.set_parent_frame(sensor_frame)
-    #sensor_frame.set_child_frame(boat_frame)
+    sensor_frame.set_child_frame(boat_frame)
     #boat_frame = updateBoatFrame(0, 0, boatframe=boat_frame, sensorframe=sensor_frame)
     #print('Boat orientation in relation to the world: ', boat_frame.get_orientation())
 
@@ -137,10 +137,12 @@ if __name__ == '__main__':
         #print('Boat orientation: ', ht.rot_matrix_to_euler(boat_frame.get_representation()))
         #print('Sensor orientation: ', ht.rot_matrix_to_euler(sensor_frame.get_representation()))
         
-        print('Boat orientation: ', boat_frame.get_orientation())
+        print('Boat orientation: ', ht.rot_matrix_to_euler(boat_frame.get_grandparent_representation()))
+        
+        #print('Boat orientation: ', boat_frame.get_orientation())
         print('Sensor orientation: ', sensor_frame.get_orientation())
         boat_pos = boat_frame.get_position()
-        boat_repr = boat_frame.get_representation()
+        boat_repr = boat_frame.get_grandparent_representation()
         ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 0], boat_repr[1, 0], boat_repr[2, 0], color='r', length=2)
         ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 1], boat_repr[1, 1], boat_repr[2, 1], color='g', length=2)
         ax.quiver(boat_repr[0, 3], boat_repr[1, 3], boat_repr[2, 3], boat_repr[0, 2], boat_repr[1, 2], boat_repr[2, 2], color='b', length=2)
@@ -155,13 +157,21 @@ if __name__ == '__main__':
         
         #sensor_frame.update_orientation([random.randint(-15, 15), random.randint(-15, 15), random.randint(-15, 15)])
         
-        boom = 8 #random.randint(-15, 15)
-        slew = 40 #random.randint(-15, 15)
+        boom = 0 #random.randint(-15, 15)
+
+        # gangway slew, 0 degrees means the gangway is pointing perpendicular to the boat
+        slew = 68 #random.randint(-15, 15)
         
-        sensor_frame.update_orientation([-4, 10, 0])
-        
-        new_boat_frame = updateBoatFrame(boom, slew, boat_frame, sensor_frame)
-        boat_frame = new_boat_frame
+
+        # sensor pitch, sensor roll, sensor yaw
+        sensor_frame.update_orientation([-5.61, -20.42, 90])
+        boat_frame.update_orientation([0, boom, slew])
+
+        # new_boat_frame = updateBoatFrame(boom, slew, boat_frame, sensor_frame)
+        boat_frame.set_parent_frame(sensor_frame)
+        sensor_frame.set_child_frame(boat_frame)
+
+
         #boat_frame = updateBoatFrame(random.randint(-15, 15), random.randint(-45, 45), boat_frame, sensor_frame)
 
         # if i > 5:
@@ -171,3 +181,25 @@ if __name__ == '__main__':
         # boat_frame.update_orientation(new_orientation)
         # boat_frame.update_position(new_position)
         plt.show()
+
+"""
+PSEUDOCODE:
+world_frame = Frame()
+sensor_frame = Frame(np.array(pos), orientation=np.array(orient), parentFrame=world_frame)
+boat_frame = Frame(np.array(post), orientation=np.array(orient), parentFrame=sensor_frame)
+sensor_frame.set_child_frame(boat_frame)
+
+while True:
+    boom = encoder_boom
+    # gangway slew, 0 degrees means the gangway is pointing perpendicular to the boat
+    slew = encoder_slew
+
+    # sensor pitch, sensor roll, sensor yaw
+    sensor_frame.update_orientation([-5.61, -20.42, 90])
+    boat_frame.update_orientation([0, boom, slew])
+    boat_frame.set_parent_frame(sensor_frame)
+    sensor_frame.set_child_frame(boat_frame)
+
+    boat_angles = ht.rot_matrix_to_euler(boat_frame.get_grandparent_representation())
+    sensor_angles = sensor_frame.get_orientation()
+"""
