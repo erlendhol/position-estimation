@@ -40,6 +40,7 @@ boolean magnetometer = false;
 boolean gyroscope = false;
 boolean linear_acceleration = false;
 boolean accelerometer = false;
+boolean accel_cal = false;
 boolean euler_meas = false;
 boolean gravity_meas = false;
 boolean acc_mag_gyro = true;
@@ -164,7 +165,7 @@ void loop(void)
   imu::Vector<3> gyro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
   imu::Vector<3> magneto = bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
   imu::Vector<3> gravity = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
-  double xm_off, ym_off, zm_off, xm_cal, ym_cal, zm_cal;
+  double xm_off, ym_off, zm_off, xm_cal, ym_cal, zm_cal, xa_cal, ya_cal, za_cal;
 
 
   xm_off = -magneto.x() + 75.81;
@@ -178,6 +179,18 @@ void loop(void)
   xm_cal = 0.8928725038*xm_off;
   ym_cal = 1.3351249540*ym_off;
   zm_cal = 0.8841532049*zm_off;
+
+  float zerog_x = -0.1415890312988175;
+  float zerog_y = 0.16061132197367467;
+  float zerog_z = -0.020036616161616116;
+  float scale_x = 10.013536596841888;
+  float scale_y = 9.9447985140919;
+  float scale_z = 9.911741161616163;
+  float g_const = 9.81;
+
+  xa_cal = (acc.x() - zerog_x) * g_const / scale_x;
+  ya_cal = (acc.y() - zerog_y) * g_const / scale_y;
+  za_cal = (acc.z() - zerog_z) * g_const / scale_z;
   
   //distance = getDistance();   //variable to store the distance measured by the sensor
 
@@ -197,6 +210,11 @@ void loop(void)
     Serial.println(millis() + String(",") + acc.x() + String(",") + acc.y() + String(",") + acc.z());
   }
 
+  if(accel_cal)
+  {
+    Serial.println(millis() + String(",") + xa_cal + String(",") + ya_cal + String(",") + za_cal);
+  }
+
   if(linear_acceleration)
   {
     Serial.println(millis() + String(",") + acc_lin.x() + String(",") + acc_lin.y() + String(",") + acc_lin.z() + String(",") + distance);
@@ -214,7 +232,8 @@ void loop(void)
 
   if(acc_mag_gyro)
   {
-    Serial.println(delta_t + String(",") + (acc.x()) + String(",") + (acc.y()) + String(",") + (acc.z()) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
+    Serial.println(delta_t + String(",") + (xa_cal) + String(",") + (ya_cal) + String(",") + (za_cal) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
+    //Serial.println(delta_t + String(",") + (acc.x()) + String(",") + (acc.y()) + String(",") + (acc.z()) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
     //Serial.write(delta_t + String(",") + (acc.x()) + String(",") + (acc.y()) + String(",") + (acc.z()) + String(",") + (xm_cal) + String(",") + (ym_cal) + String(",") + (zm_cal) + String(",") + (gyro.x()) + String(",") + (gyro.y()) + String(",") + (gyro.z()) + String(",") + 10);
   }
 
