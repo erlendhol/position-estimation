@@ -20,6 +20,7 @@ class dataProcesser:
         self.yellowUpper = (45,200,255)
         self.z_depth_ref = 0
         self.frame = None
+        self.get_frame = None
         self.depthFrame = None
         self.spatialDepth = None
         self.stop = False
@@ -159,11 +160,14 @@ class dataProcesser:
             z_translatoric_offset = self.z_depth_ref - self.z_depth * math.cos(math.radians(self.x_angle_offset))
         
         x_translatoric_offset = self.z_depth * math.sin(math.radians(self.x_angle_offset))
-        
+        self.get_frame = self.frame
         first_run = False
 
         self.z_translatoric_offset = z_translatoric_offset
         self.x_translatoric_offset = x_translatoric_offset
 
     def get_processed_data(self):
-        return self.z_translatoric_offset, self.x_translatoric_offset, self.x_angle_offset, self.frame
+        return self.z_translatoric_offset, self.x_translatoric_offset, self.x_angle_offset
+
+    def get_frame(self):
+        return self.get_frame

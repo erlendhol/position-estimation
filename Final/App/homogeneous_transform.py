@@ -14,13 +14,6 @@ import time
 
 from mpl_toolkits.mplot3d import Axes3D
 
-#data = pd.read_csv('orientation.csv')
-#orientation = data.iloc[:, 1:4].values
-
-#print(orientation[0, :])
-
-
-
 def euler_to_quaternion(r):
     """
     Converts from Euler angles(degrees) to Quaternions \n
@@ -64,7 +57,7 @@ def quat_to_rot_matrix(q):
                   [0, 0, 0, 1]])
     return R
 
-def euler_to_rot_matrix(r):
+def euler_to_rot_matrix(r, only_Z = False):
     (psi, theta, phi) = (r[2], r[1], r[0])
     c_phi = math.cos(math.radians(phi))
     s_phi = math.sin(math.radians(phi))
@@ -73,11 +66,24 @@ def euler_to_rot_matrix(r):
     c_psi = math.cos(math.radians(psi))
     s_psi = math.sin(math.radians(psi))
 
-    R = np.array([[c_theta*c_psi, c_psi*s_theta*s_phi - s_psi*c_phi, c_psi*s_theta*c_phi + s_psi*s_phi, 0],
-                  [s_psi*c_theta, s_psi*s_theta*s_phi + c_psi*c_phi, s_psi*s_theta*c_phi - c_psi*s_phi, 0],
-                  [-s_theta, c_theta*s_phi, c_theta*c_phi, 0],
-                  [0, 0, 0, 1]])
-    return R
+    Rx = np.array([[1, 0, 0, 0],
+                   [0, c_phi, -s_phi, 0],
+                   [0, s_phi, c_phi, 0],
+                   [0, 0, 0, 1]])
+    Ry = np.array([[c_theta, 0, s_theta, 0],
+                   [0, 1, 0, 0],
+                   [-s_theta, 0, c_theta, 0],
+                   [0, 0, 0, 1]])
+    Rz = np.array([[c_psi, -s_psi, 0, 0],
+                   [s_psi, c_psi, 0, 0],
+                   [0, 0, 1, 0],
+                   [0, 0, 0, 1]])
+
+    if only_Z:
+        return Rz
+    else:
+        R = Rz @ Ry @ Rx
+        return R
 
 def to_3x3_rot_matrix(m):
     """
@@ -103,9 +109,6 @@ def get_rot_matrix_list(data):
         rot_matrix = to_3x3_rot_matrix(rot_matrix_4x4)
         rot_matrices.append(rot_matrix)
     return rot_matrices
-
-
-
 
 
 def rot_matrix_to_euler(r):
@@ -152,52 +155,3 @@ def get_orientation(representation):
     rot_matrix = representation[0:3, 0:3]
     orientation = rot_matrix_to_euler(rot_matrix)
     return orientation
-
-
-
-q = np.array([-0.597, -0.002, -0.761, 0.254])
-r = quat_to_rot_matrix(q)
-#print(r)
-
-
-if __name__ == "__main__":
-
-    data = pd.read_csv('trickshot/orientation.csv')
-    rot_matrices = get_rot_matrix_list(data)
-    print('Rotation matrices: ', rot_matrices)
-
-    representation = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-    new_pos = [3, 2, 1]
-    new_orientation = [6.1231, -24.123, 0.12312]
-    new_quat = euler_to_quaternion(new_orientation)
-    new_representation = np.matmul(np.matmul(pos_to_trans_matrix(new_pos), quat_to_rot_matrix(new_quat)), representation)
-    print(new_representation, "\n")
-    print("Pos: ", get_pos(new_representation))
-    print("Orientation: ", get_orientation(new_representation))
-
-    rep_pos = get_pos(new_representation)
-    rep_quat = euler_to_quaternion(get_orientation(new_representation))
-
-    print(to_3x3_rot_matrix(new_representation))
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # # Cartesian axes
-    # ax.quiver(-1, 0, 0, 3, 0, 0, color='#aaaaaa',linestyle='dashed')
-    # ax.quiver(0, -1, 0, 0, 3, 0, color='#aaaaaa',linestyle='dashed')
-    # ax.quiver(0, 0, -1, 0, 0, 3, color='#aaaaaa',linestyle='dashed')
-
-    # ax.set_xlim([-5, 5])
-    # ax.set_ylim([-5, 5])
-    # ax.set_zlim([-5, 5])
-
-    # ax.set_xlabel('X')
-    # ax.set_ylabel('Y')
-    # ax.set_zlabel('Z')
-
-    # ax.quiver(rep_pos[0], rep_pos[1], rep_pos[2], rep_quat[1], rep_quat[2], rep_quat[3] , color='b', normalize=True)
-
-    # fig.canvas.draw()
-
-    # plt.show()
-

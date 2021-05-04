@@ -9,10 +9,10 @@ def multiply(q0, q1):
     :param q0: array containing the first quaternion
     :param q1: array containing the second quaternion
     """
-    # if q0.shape != (4, 1):
-    #     q0 = q0.T
-    # if q1.shape != (4, 1):
-    #     q1 = q1.T
+    if q0.shape != (4, 1):
+        q0 = q0.T
+    if q1.shape != (4, 1):
+        q1 = q1.T
     w0, x0, y0, z0 = q0[0], q0[1], q0[2], q0[3]
     w1, x1, y1, z1 = q1[0], q1[1], q1[2], q1[3]
     w = w0*w1 - x0*x1 - y0*y1 - z0*z1
@@ -45,24 +45,30 @@ def euler_to_quaternion(r):
     qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
     return np.array([qw, qx, qy, qz])
 
+def get_axis_angle(q):
+    w, x, y, z = q[0], q[1], q[2], q[3]
+    norm = math.sqrt(x**2 + y**2 + z**2)
+    a = np.divide(([x, y, z]), norm)
+    theta = 2 * math.atan2(norm, w)
+    roll, pitch, yaw = a * theta
+    return np.array(np.degrees([roll, pitch, yaw]))
 
-def quaternion_to_euler_2(q, as_degrees=True):
-    if q.shape != (4, 1):
-        q = q.T
-    q0, q1, q2, q3 = q[0], q[1], q[2], q[3]
-    t0 = 2*(q0*q1 + q2*q3)
-    t1 = 1 - 2*(q1**2 + q2**2)
-    roll = math.atan2(t0, t1)
-    t2 = 2*(q0*q2 - q3*q1)
-    pitch = math.asin(t2)
-    t3 = 2*(q0*q3 + q1*q2)
-    t4 = 1 - 2*(q2**2 + q3**2)
-    yaw = math.atan2(t3, t4)
-    if as_degrees:
-        return [np.degrees(roll), np.degrees(pitch), np.degrees(yaw)]
-    else:
-        return [roll, pitch, yaw]
-    
+def to_axis_angle(a):
+    a = np.radians(a)
+    x, y, z = a[0], a[1], a[2]
+    norm = math.sqrt(x**2 + y**2 + z**2)
+    x, y, z = np.divide([x, y, z], norm)
+    theta = a[0]/x
+    return np.array([x, y, z, np.degrees(theta)])
+
+def axis_angle_to_quat(a):
+    theta = np.radians(a[3])
+    s = math.sin(theta/2)
+    w = math.cos(theta/2)
+    x = a[0] * s
+    y = a[1] * s
+    z = a[2] * s
+    return np.array([w, x, y, z])
 
 def quaternion_to_euler(q, as_degrees=True):
     """
@@ -85,16 +91,26 @@ def quaternion_to_euler(q, as_degrees=True):
     else:
         return [roll, pitch, yaw]
 
+def quaternion_to_euler_2(q, as_degrees=True):
+    if q.shape != (4, 1):
+        q = q.T
+    q0, q1, q2, q3 = q[0], q[1], q[2], q[3]
+    t0 = 2*(q0*q1 + q2*q3)
+    t1 = 1 - 2*(q1**2 + q2**2)
+    roll = math.atan2(t0, t1)
+    t2 = 2*(q0*q2 - q3*q1)
+    pitch = math.asin(t2)
+    t3 = 2*(q0*q3 + q1*q2)
+    t4 = 1 - 2*(q2**2 + q3**2)
+    yaw = math.atan2(t3, t4)
+    if as_degrees:
+        return [np.degrees(roll), np.degrees(pitch), np.degrees(yaw)]
+    else:
+        return [roll, pitch, yaw]
+
 def normalize(q):
     norm = np.linalg.norm(q)
     q_norm = 0
     if norm > 0:
         q_norm = np.divide(q, norm)
     return q_norm
-
-if __name__ == '__main__':
-    q0 = np.array([[1, 2, 3, 4]])
-    q1 = np.array([[4, 3, 2, 1]])
-    q2 = multiply(q0, q1)
-    q3 = normalize(q2)
-    print(q3)

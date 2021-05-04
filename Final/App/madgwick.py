@@ -3,7 +3,6 @@
 import numpy as np
 import math
 
-# Self-made libraries
 import quaternion
 
 class MadgwickFilter():
@@ -14,9 +13,9 @@ class MadgwickFilter():
     angular velocity: beta = sqrt(3/4) * omegab, where omegab is the estimated
     mean zero gyroscope measurement error of each axis.
     """
-    def __init__(self, beta):
+    def __init__(self, beta, initial_slew):
         self.beta = float(beta)
-        self.q = np.array([0.7071, 0, 0.7071, 0]).T
+        self.q = quaternion.euler_to_quaternion([0, 0, initial_slew])
         self.update_term = 0
         self.acc_normalized = np.array([0, 0, 0]).T
         self.mag_normalized = np.array([0, 0, 0, 0]).T
@@ -67,23 +66,6 @@ class MadgwickFilter():
 
             h = quaternion.multiply(quaternion.multiply(self.q, self.mag_normalized), quaternion.conjugate(self.q))
 
-            # mw, mx, my, mz = self.mag_normalized[0], self.mag_normalized[1], self.mag_normalized[2], self.mag_normalized[3]
-            #
-            # tw = qw*mw - qx*mx - qy*my - qz*mz
-            # tx = qw*mx + qx*mw + qy*mz - qz*my
-            # ty = qw*my + qy*mw + qz*mx - qx*mz
-            # tz = qw*mz + qz*mw + qx*my - qy*mx
-            #
-            # cw, cx, cy, cz = qw, -qx, -qy, -qz
-            #
-            # hw = tw*cw - tx*cx - ty*cy - tz*cz
-            # hx = tw*cx + tx*cw + ty*cz - tz*cy
-            # hy = tw*cy + ty*cw + tz*cx - tx*cz
-            # hz = tw*cz + tz*cw + tx*cy - ty*cx
-            #
-            # bx = math.sqrt(hx**2 + hy**2)
-            # bz = hz
-
             bx = math.sqrt(h[1]**2 + h[2]**2)
             bz = h[3]
 
@@ -98,18 +80,8 @@ class MadgwickFilter():
             f_gb = np.block([f_g,
                              f_b])
 
-            #print('J_g: ', j_g)
-            #print('J_b: ', j_b)
-
-            #print('J_g.T: ', j_g.T)
-            #print('J_b.T: ', j_b.T)
-
             j_gb = np.block([[j_g],
                              [j_b]])
-
-            #print('J_gb: ', j_gb)
-            #print('J_gb.T: ', j_gb.T)
-            #print('F_gb: ', f_gb)
 
             grad_step = j_gb.T @ f_gb
             grad_norm = np.linalg.norm(grad_step)
