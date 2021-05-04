@@ -41,10 +41,10 @@ class dataProcesser:
         self.z_depth = 0.0
         self.z_depth_ref = 0.0
         self.imu_euler_x = 0.0
-        
+
 
     def get_image_stream(self):
-        while not self.stop: 
+        while not self.stop:
             self.frame, self.depthFrame, self.spatialDepth = self.image_stream.get_frame()
 
     def get_RGB_frame(self):
@@ -76,9 +76,9 @@ class dataProcesser:
         color_mask = cv2.inRange(hsv_frame, lowerValues, upperValues)
         if normalized_mask:
             # Create nparray to multiply with depth image to filter out depth values which are not in the color area
-            color_mask_normalized = color_mask/255  
+            color_mask_normalized = color_mask/255
             return color_mask, color_mask_normalized
-        return color_mask  
+        return color_mask
 
     def get_grey_image_from_frame(self, frame):
         blurred_frame = cv2.GaussianBlur(frame, (5, 5), 0)
@@ -91,15 +91,15 @@ class dataProcesser:
         biggest_contour = 0
         for contour in contours:
             area = cv2.contourArea(contour)
-            
+
             if area > biggest_area:
                 biggest_area = area
                 biggest_contour = contour
-        
+
         if return_area:
             return biggest_contour, biggest_area
         return biggest_contour
-    
+
     def update_roi(self):
         self.topLeftX = float((self.cx/self.width)-0.025)
         self.topLeftY = float((self.cy/self.heigth)-0.025)
@@ -114,7 +114,7 @@ class dataProcesser:
             self.bottomRightX = 1.0
         if self.bottomRightY > 1.0:
             self.bottomRightY = 1.0
-    
+
     def update_config(self):
         self.topLeft_tuple = [self.topLeftX, self.topLeftY]
         self.bottomRight_tuple = [self.bottomRightX, self.bottomRightY]
@@ -127,7 +127,7 @@ class dataProcesser:
             self.update_roi()
         self.update_config()
         self.frame = self.get_RGB_frame()
-        
+
         self.hsv = self.convert_2_HSV(self.frame)
         self.yellow_mask = self.get_mask_from_hsv_frame(self.hsv, self.yellowLower, self.yellowUpper)
         self.biggest_contour = self.get_biggest_contour(self.yellow_mask)
@@ -151,14 +151,14 @@ class dataProcesser:
                 cv2.rectangle(self.frame, pt1=pt1, pt2=pt2, color=color)
                 z_depth = int(depthData.spatialCoordinates.z)
                 cv2.putText(self.frame, f"Z: {z_depth} mm", (int(self.topLeftX) + 10, int(self.topLeftY) + 50), cv2.FONT_HERSHEY_TRIPLEX, 0.5, (255,255,255))
-        
+
         if not self.z_ref_noted and (self.z_depth > 5 or self.z_depth < -5):
             self.z_depth_ref = self.z_depth * math.cos(math.radians(self.x_angle_offset))
             z_translatoric_offset = 0.
             self.z_ref_noted = True
         else:
             z_translatoric_offset = self.z_depth_ref - self.z_depth * math.cos(math.radians(self.x_angle_offset))
-        
+
         x_translatoric_offset = self.z_depth * math.sin(math.radians(self.x_angle_offset))
         self.get_frame = self.frame
         first_run = False

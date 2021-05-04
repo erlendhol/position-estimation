@@ -36,6 +36,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
         self.listenThread = Thread(target=self.readSerialInputs, args=())
         self.listenThread.daemon = True
+        self.started = False
 
         # Connecting the menu buttons
         self.ui.RawAccBtn.clicked.connect(lambda : self.ui.WidgetPages.setCurrentIndex(0))
@@ -54,6 +55,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
         self.capture = cv2.VideoCapture('videoplayback.mp4')
         self.processer = dataProcesser()
+        self.processer.run(0)
+        self.frame = None
 
         # Create variables for holding the last 200 plotting values
         self.time_stamps = list(range(self.numberOfPlottingValues))
@@ -201,6 +204,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
     def readSerialInputs(self):
         # Initial Arduino reading
+        self.started = True
         self.madgwick = MadgwickFilter(beta=self.beta, initial_slew=self.ui.EncoderYaw.value())
 
         self.worldFrame = frame.Frame()
@@ -293,7 +297,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.kalman_filter_yaw.updateParameters(A=self.A, Q=self.Q_yaw)
 
         self.processer.run(self.mad_yaw)
-        x_position, z_position, angle_offset = processer.get_processed_data()
+        x_position, z_position, angle_offset = self.processer.get_processed_data()
         self.sensorFrame.update_position([x_position, z_position, 0])
         self.sensorFrame.update_orientation([float(self.est_angle_roll), -float(self.est_angle_pitch), float(self.mad_yaw)])
         self.shipFrame.update_orientation([self.ui.EncoderPitch.value(), 0, -self.ui.EncoderYaw.value()])
@@ -415,7 +419,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
     def showVideo(self):
         while True:
             #self.ret, self.frame = self.capture.read()
-            self.frame = self.processer.get_frame()
+            if self.started:
+                self.frame = self.processer.get_frame
             if self.frame is not None:
                 self.rgbImage = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 self.convertToQtFormat = QtGui.QImage(self.rgbImage.data, self.rgbImage.shape[1], self.rgbImage.shape[0],
@@ -432,7 +437,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
-    arduino = serial.Serial(port='/dev/cu.usbserial-DN041PFR', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0)
+    arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0)
     import sys
     app = QtWidgets.QApplication(sys.argv)
     mySW = ControlMainWindow()
