@@ -425,12 +425,15 @@ class ControlMainWindow(QtWidgets.QMainWindow):
     def showVideo(self):
         while True:
             #self.ret, self.frame = self.capture.read()
-            if self.started:
-                self.frame = self.processer.get_frame
+            #if self.started:
+            self.frame = self.processer.get_frame
+            
+
             if self.frame is not None:
+                print('Hei')
                 self.rgbImage = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 self.convertToQtFormat = QtGui.QImage(self.rgbImage.data, self.rgbImage.shape[1], self.rgbImage.shape[0],
-                                                    QtGui.QImage.Format_RGB888)
+                                                      QtGui.QImage.Format_RGB888)
                 self.convertToQtFormat = QtGui.QPixmap.fromImage(self.convertToQtFormat)
                 self.pixmap = QtGui.QPixmap(self.convertToQtFormat)
                 self.resizeImage = self.pixmap.scaled(480,480, QtCore.Qt.KeepAspectRatio)

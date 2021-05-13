@@ -11,7 +11,7 @@ The class is made using the Qt framework.
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1275, 808)
+        MainWindow.resize(2560, 1600)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("background-color: rgb(127, 127, 127);")
         self.centralwidget.setObjectName("centralwidget")
