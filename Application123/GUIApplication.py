@@ -25,6 +25,8 @@ import homogeneous_transform as ht
 import frame
 import mainwindow
 
+from data_processer import dataProcesser
+
 ## FOR Å PRINTE POSISJONSVERDIER I GUI: ##
 # Hver gang posisjonsverdien skal oppdateres skjer det på følgende måte:
 # self.ui.EstHorizontal.setText(verdien-som-skal-vises)
@@ -61,6 +63,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.ui.ShipFrameZBtn.setChecked(True)
 
         self.capture = cv2.VideoCapture('seaonics.mp4')
+        self.processer = dataProcesser()
+        self.processer.run(0)
 
         # Create variables for holding the last 200 plotting values
         self.time_stamps = list(range(self.numberOfPlottingValues))
@@ -295,6 +299,9 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.Q_pitch = self.s2_pitch * base_sigma
         self.Q_yaw = self.s2_yaw * base_sigma
 
+        self.processer.run(self.mad_yaw)
+        x_position, z_position, angle_offset = self.processer.get_processed_data()
+
         self.kalman_filter_roll.updateParameters(A=self.A, Q=self.Q_roll)
         self.kalman_filter_pitch.updateParameters(A=self.A, Q=self.Q_pitch)
         self.kalman_filter_yaw.updateParameters(A=self.A, Q=self.Q_yaw)
@@ -417,7 +424,9 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
     def showVideo(self):
         while True:
-            self.ret, self.frame = self.capture.read()
+            #self.ret, self.frame = self.capture.read()
+            if self.started:
+                self.frame = self.processer.get_frame
             if self.frame is not None:
                 self.rgbImage = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 self.convertToQtFormat = QtGui.QImage(self.rgbImage.data, self.rgbImage.shape[1], self.rgbImage.shape[0],
@@ -435,7 +444,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
-    arduino = serial.Serial(port='/dev/cu.usbserial-DN041PFR', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0)
+    arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0)
     import sys
     app = QtWidgets.QApplication(sys.argv)
     mySW = ControlMainWindow()
