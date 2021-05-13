@@ -62,6 +62,9 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.ui.SensorFrameZBtn.setChecked(True)
         self.ui.ShipFrameZBtn.setChecked(True)
 
+        self.x_position = 0
+        self.z_position = 0
+
         self.capture = cv2.VideoCapture('seaonics.mp4')
         self.processer = dataProcesser()
         self.processer.run(0)
@@ -300,7 +303,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.Q_yaw = self.s2_yaw * base_sigma
 
         self.processer.run(self.mad_yaw)
-        x_position, z_position, angle_offset = self.processer.get_processed_data()
+
+        self.x_position, self.z_position, _ = self.processer.get_processed_data()
 
         self.kalman_filter_roll.updateParameters(A=self.A, Q=self.Q_roll)
         self.kalman_filter_pitch.updateParameters(A=self.A, Q=self.Q_pitch)
@@ -378,8 +382,8 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.ui.label_6.setText(pitch_text)
         self.ui.label_5.setText(yaw_text)
         
-        self.ui.EstHorizontal.setText(str(self.processer.x_translatoric_offset))
-        self.ui.EstDepth.setText(str(self.processer.z_translatoric_offset))
+        self.ui.EstHorizontal.setText(str(self.processer.x_translatoric_offset/10))
+        self.ui.EstDepth.setText(str(self.processer.z_translatoric_offset/10))
 
         self.est_roll_line.setData(self.time_stamps, self.est_roll_list)
         self.ship_pitch_line.setData(self.time_stamps, self.ship_pitch_list)
@@ -449,7 +453,7 @@ class ControlMainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
-    arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0)
+    arduino = serial.Serial(port='/dev/ttyUSB1', baudrate=115200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0)
     import sys
     app = QtWidgets.QApplication(sys.argv)
     mySW = ControlMainWindow()

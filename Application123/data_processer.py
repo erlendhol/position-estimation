@@ -41,7 +41,9 @@ class dataProcesser:
         self.z_depth = 0.0
         self.z_depth_ref = 0.0
         self.imu_euler_x = 0.0
-
+        self.euler_x_ref = 0.0
+        self.imu_euler_x_stored = False
+        self.n = 0
 
     def get_image_stream(self):
         while not self.stop:
@@ -122,7 +124,7 @@ class dataProcesser:
         self.bottomRight = dai.Point2f(self.bottomRight_tuple[0], self.bottomRight_tuple[1])
         self.image_stream.update_config(self.topLeft, self.bottomRight)
 
-    def run(self, euler_x=0):
+    def run(self, euler_x=0.):
         if self.first_run:
             self.update_roi()
         self.update_config()
@@ -132,14 +134,18 @@ class dataProcesser:
         self.yellow_mask = self.get_mask_from_hsv_frame(self.hsv, self.yellowLower, self.yellowUpper)
         self.biggest_contour = self.get_biggest_contour(self.yellow_mask)
         self.cx, self.cy = self.get_contour_center(self.biggest_contour)
-        if self.first_run:
+        if self.n > 5:
             self.cx_ref = self.cx
             self.cy_ref = self.cy
+        if euler_x > 0 and not self.imu_euler_x_stored:
+            self.euler_x_ref = euler_x
+            self.imu_euler_x_stored = True
         pixle_offset_x = self.cx_ref - self.cx
         pixle_offset_y = self.cy_ref - self.cy
-        camera_angle_offset = pixle_offset_x*self.deg_per_pix
+        self.imu_euler_x = self.euler_x_ref - euler_x
+        camera_angle_offset = pixle_offset_x * self.deg_per_pix
         self.x_angle_offset = camera_angle_offset - self.imu_euler_x
-        self.y_angle_offset = pixle_offset_y*self.deg_per_pix
+        self.y_angle_offset = pixle_offset_y * self.deg_per_pix
 
         if self.depthFrame is not None:
             for depthData in self.spatialDepth:
@@ -148,26 +154,26 @@ class dataProcesser:
                 pt1 = (int(self.topLeftX*self.width), int(self.topLeftY*self.heigth))
                 pt2 = (int(self.bottomRightX*self.width), int(self.bottomRightY*self.heigth))
                 color = (255,255,255)
-                cv2.rectangle(self.frame, pt1=pt1, pt2=pt2, color=color)
-                z_depth = int(depthData.spatialCoordinates.z)
-                cv2.putText(self.frame, f"Z: {z_depth} mm", (int(self.topLeftX) + 10, int(self.topLeftY) + 50), cv2.FONT_HERSHEY_TRIPLEX, 0.5, (255,255,255))
-
+                cv2.rectangle(self.frame, pt1=pt1, pt2=pt2, color=color, thickness=50)
+                self.z_depth = int(depthData.spatialCoordinates.z)
+                
         if not self.z_ref_noted and (self.z_depth > 5 or self.z_depth < -5):
-            self.z_depth_ref = self.z_depth * math.cos(math.radians(self.x_angle_offset))
-            z_translatoric_offset = 0.
+            self.z_depth_ref = self.z_depth
+            self.z_translatoric_offset = 0.
             self.z_ref_noted = True
         else:
-            z_translatoric_offset = self.z_depth_ref - self.z_depth * math.cos(math.radians(self.x_angle_offset))
+            self.z_translatoric_offset = self.z_depth_ref - self.z_depth
 
-        x_translatoric_offset = self.z_depth * math.sin(math.radians(self.x_angle_offset))
+        self.x_translatoric_offset = self.z_depth * math.tan(math.radians(self.x_angle_offset))
         self.get_frame = self.frame
-        first_run = False
+        self.first_run = False
+        print(self.z_translatoric_offset)
+        if self.n < 10:
+            self.n += 1
 
-        self.z_translatoric_offset = z_translatoric_offset
-        self.x_translatoric_offset = x_translatoric_offset
 
     def get_processed_data(self):
         return self.z_translatoric_offset, self.x_translatoric_offset, self.x_angle_offset
 
-    def get_frame(self):
-        return self.get_frame
+    
+
