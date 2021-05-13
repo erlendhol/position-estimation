@@ -377,6 +377,9 @@ class ControlMainWindow(QtWidgets.QMainWindow):
         self.ui.label_7.setText(roll_text)
         self.ui.label_6.setText(pitch_text)
         self.ui.label_5.setText(yaw_text)
+        
+        self.ui.EstHorizontal.setText(str(self.processer.x_translatoric_offset))
+        self.ui.EstDepth.setText(str(self.processer.z_translatoric_offset))
 
         self.est_roll_line.setData(self.time_stamps, self.est_roll_list)
         self.ship_pitch_line.setData(self.time_stamps, self.ship_pitch_list)
@@ -430,7 +433,6 @@ class ControlMainWindow(QtWidgets.QMainWindow):
             
 
             if self.frame is not None:
-                print('Hei')
                 self.rgbImage = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 self.convertToQtFormat = QtGui.QImage(self.rgbImage.data, self.rgbImage.shape[1], self.rgbImage.shape[0],
                                                       QtGui.QImage.Format_RGB888)
